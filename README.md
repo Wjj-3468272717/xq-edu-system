@@ -425,7 +425,7 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 
 ### 2.2 Mybatis-plus代码生成器
 
-[mp官网]: https://baomidou.com/guides/code-generator/
+[mp官网]:  https://baomidou.com/guides/code-generator/	" 代码生成器指南"
 
 ```java
 package com.v1;
