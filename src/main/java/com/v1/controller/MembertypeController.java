@@ -91,4 +91,16 @@ public class MembertypeController {
         }
     }
 
+    @RequestMapping("/update")
+    @ResponseBody
+    public DataResults update(Membertype membertype){
+        log.info("更新之后的数据是："+membertype);
+        boolean update = membertypeService.updateById(membertype);
+        if(update){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+
 }
