@@ -652,7 +652,7 @@ http://localhost:8888/membertype/testThymeleaf
 
 #### 3.1.2 后端分析
 
-- 接口传入的参数：
+- 接口传入的参数类型：
 
   | 字段       | 含义     |
   | ---------- | -------- |
@@ -691,3 +691,55 @@ http://localhost:8888/membertype/testThymeleaf
 ```
 
 ### 3.2  新增会员卡信息
+
+需求：点击添加会员卡按钮，完成会员卡信息的添加。
+
+#### 3.2.1 前端分析
+
+```js
+$.post('/membertype/add', {
+                'typeName': name,
+                'typeciShu': cishu,
+                'typeDay': tianshu,
+                'typemoney': money
+            }, function (data) {
+                console.log("返回值:" + JSON.stringify(data));
+                if (data.code == 200) {
+                    //新增成功之后渲染数据重写查询
+                    $("#table").bootstrapTable("load", data);
+                    $.getJSON("/membertype/queryPage", {
+                        "pageSize": opt.pageSize,
+                        "pageNumber": opt.pageNumber,
+                        "typeName": typeId
+                    }, function (releset) {
+                        $("#table").bootstrapTable('load', releset);
+                    });
+                    swal("添加！", "添加成功", "success");
+                } else {
+                    console.log("添加失败:" + JSON.stringify(data));
+                    swal("添加！", "添加失败", "error");
+                }
+            });
+```
+
+#### 3.2.2 后端分析
+
+接口传入参数类型：memberType
+
+接口返回参数：DataResults，成功返回ResultCode.SUCCESS，失败返回ResultCode.FAIL
+
+```java
+    @RequestMapping("/add")
+    @ResponseBody
+    public DataResults add(Membertype membertype){
+        log.info("新增数据是："+membertype);
+        membertype.setTypeDel(0);	//将是否逻辑删除设置为0，即 未删除
+        boolean save = membertypeService.save(membertype);
+        if(save){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
