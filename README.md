@@ -833,6 +833,88 @@ $.post('/membertype/add', {
 
 
 ```java
+    @RequestMapping("/update")
+    @ResponseBody
+    public DataResults update(Membertype membertype){
+        log.info("更新之后的数据是："+membertype);
+        boolean update = membertypeService.updateById(membertype);
+        if(update){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+```
 
+
+
+### 3.5 会员卡数据删除
+
+
+
+#### 3.5.1 前端分析
+
+
+
+```js
+ //删除
+        function del1(id) {
+            swal({
+                    title: "确定删除吗？",
+                    text: "您将无法恢复！",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "确定删除！",
+                    cancelButtonText: "取消删除！",
+                    closeOnConfirm: false,
+                    closeOnCancel: false
+                },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        var opt = $('#table').bootstrapTable('getOptions');
+                        var typeId = $('#cardid').val();
+                        $.post('/membertype/delete/'+id, {
+                            '_method':'delete'
+                        }, function (result) {
+                            if (result.code == 200) {
+                                $("#table").bootstrapTable("load", result);
+                                $.getJSON("/membertype/queryPage", {
+                                    "pageSize": opt.pageSize,
+                                    "pageNumber": opt.pageNumber,
+                                    "typeName": typeId
+                                }, function (releset) {
+                                    $("#table").bootstrapTable('load', releset);
+                                });
+                                swal("删除！", "删除成功", "success");
+                            } else {
+                                swal("删除！", "删除失败", "error");
+                            }
+                        });
+                    } else {
+                        swal("取消！", "您已取消删除)", "error");
+                    }
+                });
+```
+
+
+
+#### 3.5.2 后端分析
+
+
+
+```java
+    @RequestMapping("delete/{typeId}")
+    @ResponseBody
+    public DataResults delete(@PathVariable Integer typeId){
+        //逻辑删除
+        Membertype membertype = new Membertype(typeId, 1);
+        boolean update = membertypeService.updateById(membertype);
+        if(update){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
 ```
 

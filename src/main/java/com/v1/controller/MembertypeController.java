@@ -91,10 +91,28 @@ public class MembertypeController {
         }
     }
 
+    /**
+     * 修改会员卡类型数据
+     * @param membertype
+     * @return
+     */
     @RequestMapping("/update")
     @ResponseBody
     public DataResults update(Membertype membertype){
         log.info("更新之后的数据是："+membertype);
+        boolean update = membertypeService.updateById(membertype);
+        if(update){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+
+    @RequestMapping("delete/{typeId}")
+    @ResponseBody
+    public DataResults delete(@PathVariable Integer typeId){
+        //逻辑删除
+        Membertype membertype = new Membertype(typeId, 1);
         boolean update = membertypeService.updateById(membertype);
         if(update){
             return DataResults.success(ResultCode.SUCCESS);
