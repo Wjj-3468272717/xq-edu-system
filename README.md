@@ -1,7 +1,7 @@
 # p1--教务管理系统
 基于SSMp的教务管理系统
 
-## 1.项目介绍
+## 1.总体介绍
 
 ### 1.1 项目总体功能介绍
 
@@ -21,7 +21,9 @@
 
 ## 2.环境搭建
 
-### 2.1 pom.xml
+### 2.1 配置文件编写
+
+#### 2.1.1 pom.xml
 
 ```xml
 <properties>
@@ -202,7 +204,7 @@
   </dependencies>
 ```
 
-### 2.2 db.properties
+#### 2.1.2 db.properties
 
 运行/数据库脚本/edu_system.sql，创建database和tables
 
@@ -216,7 +218,7 @@ jdbc.url=jdbc:mysql://127.0.0.1:3306/edu?useUnicode=true&characterEncoding=UTF-8
 
 ```
 
-### 2.3 log4j.properties
+#### 2.1.3 log4j.properties
 
 
 ```properties
@@ -240,7 +242,7 @@ log4j.logger.java.sql.Statement=DEBUG
 log4j.logger.java.sql.PreparedStatement=DEBUG
 ```
 
-### 2.4 mybatis.xml
+#### 2.1.4 mybatis.xml
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -263,7 +265,7 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 </configuration>
 ```
 
-### 2.5 spring.xml
+#### 2.1.5 spring.xml
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -320,7 +322,7 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 </beans>
 ```
 
-### 2.6 spring-mvc.xml
+#### 2.1.6 spring-mvc.xml
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -359,7 +361,7 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 </beans>
 ```
 
-### 2.7 web.xml
+#### 2.1.7 web.xml
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -421,3 +423,175 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 </web-app>
 ```
 
+### 2.2 Mybatis-plus代码生成器
+
+[mp官网]: https://baomidou.com/guides/code-generator/
+
+```java
+package com.v1;
+
+import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
+import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.generator.AutoGenerator;
+import com.baomidou.mybatisplus.generator.InjectionConfig;
+import com.baomidou.mybatisplus.generator.config.*;
+import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine; // 修正1：类名正确拼写
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class CodeGenerator {
+
+    /**
+     * <p>
+     * 读取控制台内容
+     * </p>
+     */
+    public static String scanner(String tip) {
+        Scanner scanner = new Scanner(System.in);
+        StringBuilder help = new StringBuilder();
+        help.append("请输入" + tip + "：");
+        System.out.println(help.toString());
+        if (scanner.hasNext()) {
+            String ipt = scanner.next();
+            if (StringUtils.isNotEmpty(ipt)) {
+                return ipt;
+            }
+        }
+        throw new MybatisPlusException("请输入正确的" + tip + "！");
+    }
+
+    public static void main(String[] args) {
+        // 代码生成器
+        AutoGenerator mpg = new AutoGenerator();
+
+        // 全局配置
+        GlobalConfig gc = new GlobalConfig();
+        String projectPath = System.getProperty("user.dir"); // 获取当前项目的路径
+        // 注意：如果路径包含中文或空格，建议使用项目根路径
+        gc.setOutputDir(projectPath + "/src/main/java"); // 真正生成的路径
+        gc.setAuthor("v1"); // 作者信息
+        gc.setOpen(false); // 不用打开代码生成的文件夹窗口
+//        gc.setSwagger2(true); // 可选：开启Swagger2注解支持
+        // gc.setFileOverride(true); // 可选：覆盖已有文件
+        gc.setServiceName("%sService"); // 设置Service接口名称，去掉I前缀
+        mpg.setGlobalConfig(gc);
+
+        // 数据源配置
+        DataSourceConfig dsc = new DataSourceConfig();
+        dsc.setUrl("jdbc:mysql://localhost:3306/edu?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai");
+        dsc.setDriverName("com.mysql.cj.jdbc.Driver");
+        dsc.setUsername("root");
+        dsc.setPassword("123456");
+        mpg.setDataSource(dsc);
+
+        // 包配置
+        PackageConfig pc = new PackageConfig();
+        pc.setParent("com.v1");
+        pc.setEntity("pojo");
+        pc.setMapper("mapper");
+        pc.setService("service");
+        pc.setServiceImpl("service.impl");
+        pc.setController("controller"); // 建议添加controller包配置
+        mpg.setPackageInfo(pc);
+
+        // 模板配置
+        TemplateConfig templateConfig = new TemplateConfig();
+        templateConfig.setXml(null); // 不生成XML文件
+        // templateConfig.setController("/templates/controller.java"); // 自定义controller模板
+        mpg.setTemplate(templateConfig);
+
+        // 策略配置
+        StrategyConfig strategy = new StrategyConfig();
+        strategy.setNaming(NamingStrategy.underline_to_camel); // 开启驼峰命名
+        strategy.setColumnNaming(NamingStrategy.underline_to_camel);
+
+        strategy.setInclude(scanner("表名，多个英文逗号分割").split(","));
+        strategy.setControllerMappingHyphenStyle(true); // Controller映射使用连字符
+        strategy.setEntityLombokModel(true); // 使用Lombok注解
+        strategy.setRestControllerStyle(true); // 生成@RestController注解
+        mpg.setStrategy(strategy);
+
+        // 设置模板引擎
+        mpg.setTemplateEngine(new FreemarkerTemplateEngine()); // 修正2：类名正确拼写
+
+        // 执行生成
+        mpg.execute();
+    }
+}
+```
+
+### 2.3 Thymeleaf模板
+
+在spring-mvc.xml中添加如下配置：
+
+```xml
+ <!-- 模板引擎解析器 -->
+    <bean id="templateResolver"
+          class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
+        <property name="prefix" value="/WEB-INF/templates/"/>
+        <property name="suffix" value=".html"/>
+        <!-- 模板引擎使用严格的HTML语法 -->
+        <property name="templateMode" value="HTML"/>
+        <!-- 模板引擎要不要缓存（开发时设为false，生产环境设为true） -->
+        <property name="cacheable" value="false"/>
+        <property name="characterEncoding" value="UTF-8"/>
+    </bean>
+
+    <!-- 模板引擎 -->
+    <bean id="templateEngine"
+          class="org.thymeleaf.spring5.SpringTemplateEngine">
+        <property name="templateResolver" ref="templateResolver"/>
+        <!-- 配置Thymeleaf标签库 -->
+        <property name="additionalDialects">
+            <set>
+                <bean class="org.thymeleaf.extras.springsecurity5.dialect.SpringSecurityDialect"/>
+            </set>
+        </property>
+    </bean>
+
+    <!-- Thymeleaf模板引擎整合到Spring环境中 -->
+    <bean class="org.thymeleaf.spring5.view.ThymeleafViewResolver">
+        <property name="templateEngine" ref="templateEngine"/>
+        <!-- 中文乱码问题 -->
+        <property name="characterEncoding" value="UTF-8"/>
+        <!-- 设置响应内容类型 -->
+        <property name="contentType" value="text/html; charset=UTF-8"/>
+        <!-- 视图名称顺序（可选） -->
+        <property name="order" value="1"/>
+    </bean>
+```
+
+测试Thymeleaf是否可用：
+
+```java
+    @RequestMapping("/testThymeleaf")
+    public String testThymeleaf(Model model){
+        model.addAttribute("userName","eric");
+        return "hello";
+    }
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h5>hello Thymeleaf</h5>
+    <p th:text="${userName}"></p>
+</body>
+</html>
+```
+
+重启tomcat，发送请求，查看页面是否渲染数据
+
+[]: http://localhost:8888/membertype/testThymeleaf
+
+## 3. 会员卡功能模块实现
