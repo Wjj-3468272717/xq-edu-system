@@ -597,3 +597,97 @@ public class CodeGenerator {
 http://localhost:8888/membertype/testThymeleaf
 
 ## 3. 会员卡功能模块实现
+
+### 3.1 会员卡类型分页查询
+
+需求：打开会员卡页面member-type.html，展示会员卡数据；进行会员卡名称进行 条件查询，也能分页展示会员卡数据。
+
+#### 3.1.1 前端分析
+
+- 页面打开时，发送分页请求
+
+```js
+ $(function () {
+            //页面加载的时候发送异步分页请求
+            $('#table').bootstrapTable({
+                url: '/membertype/queryPage',  //请求地址
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                columns: [
+                    {field: 'typeId', title: '会员卡编号', sortable: true},
+                    {field: 'typeName', title: '会员卡名称', sortable: true},
+                    {field: 'typeDay', title: '有效天数', sortable: true},
+                    {field: 'typeciShu', title: '有效次数', sortable: true},
+                    {field: 'typemoney', title: '售价', sortable: true},
+                    {
+                        field: 'xx', title: '操作',
+                        formatter: function (value, row, index) {
+                            return "<a href='javascript:del1(" + row.typeId + ")' class='glyphicon glyphicon-trash'>&nbsp;&nbsp;</a><a href='javascript:upd1(" + row.typeId + ")' class='glyphicon glyphicon-pencil'></a>";
+                        }
+                    }
+                ],
+                queryParamsType: '',
+                queryParams: queryParams,
+                height: 360,
+                pageList: [5, 10, 15],
+                pageNumber: 1,  //当前页码
+                pageSize: 5,    //每页大小
+                pagination: true,
+                sidePagination: 'server',
+            })
+        });
+```
+
+- 点击查询按钮发送分页请求
+
+```js
+ $.getJSON("/membertype/queryPage", {
+                "pageSize": opt.pageSize,
+                "pageNumber": opt.pageNumber,
+                "typeName": typeName
+            }, function (releset) {
+                $("#table").bootstrapTable('load', releset);
+            })
+```
+
+#### 3.1.2 后端分析
+
+- 接口传入的参数：
+
+  | 字段       | 含义     |
+  | ---------- | -------- |
+  | typeName   | 查询类型 |
+  | pageNumber | 当前页数 |
+  | pageSize   | 分页大小 |
+
+- 当前接口需要返回给前端的参数：
+
+  | 字段  | 含义             |
+  | ----- | :--------------- |
+  | total | 总记录数         |
+  | rows  | 当前页面数据列表 |
+
+1. 定义map数据类型，存储total，rows
+2. QueryWrapper构建查询条件后调用memberType的page方法获取分页结果
+3. 提取出total和rows放入map并返回
+
+```java
+@RequestMapping("queryPage")
+    @ResponseBody
+    public Map<String,Object> queryPage(String typeName, Integer pageNumber, Integer pageSize){
+        Map<String,Object> resultMap = new HashMap<>();
+        log.info("typeName:" + typeName);
+        log.info("pageSize:" + pageSize);
+        log.info("pageNumber:" + pageNumber);
+        //select * from membertype where typeName like "%typeName%"
+        QueryWrapper<Membertype> q = new QueryWrapper<>();
+        q.like(typeName != null &&  !"".equals(typeName),"typeName",typeName);
+        q.eq("typeDel",0);//查询没有逻辑删除的数据
+        IPage<Membertype> iPage = membertypeService.page(new Page<Membertype>(pageNumber, pageSize), q);
+        resultMap.put("total",iPage.getTotal());
+        resultMap.put("rows", iPage.getRecords());
+        return resultMap;
+    }
+```
+
+### 3.2  新增会员卡信息
