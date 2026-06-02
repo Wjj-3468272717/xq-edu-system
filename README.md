@@ -19,9 +19,9 @@
   - 前端框架：BootStrap,Layui 
   - 数据图表：ECharts
 
-## 2.项目准备
+## 2.环境搭建
 
-### 2.1 pom文件相关依赖
+### 2.1 pom.xml
 
 ```xml
 <properties>
@@ -202,7 +202,7 @@
   </dependencies>
 ```
 
-### 2.2 数据库
+### 2.2 db.properties
 
 运行/数据库脚本/edu_system.sql，创建database和tables
 
@@ -213,7 +213,11 @@ jdbc.username=       #youru sername
 jdbc.password=       #your password
 jdbc.driverClassName=com.mysql.cj.jdbc.Driver   #your driver
 jdbc.url=jdbc:mysql://127.0.0.1:3306/edu?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true   #your url
+
 ```
+
+### 2.3 log4j.properties
+
 
 ```properties
 #log4j.properties
@@ -234,5 +238,186 @@ log4j.logger.org.apache=INFO
 log4j.logger.java.sql.Connection=DEBUG
 log4j.logger.java.sql.Statement=DEBUG
 log4j.logger.java.sql.PreparedStatement=DEBUG
+```
+
+### 2.4 mybatis.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <typeAliases>
+        <package name="com.v1.pojo"/>
+    </typeAliases>
+
+    <plugins>
+        <plugin interceptor="com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor"/>
+    </plugins>
+
+    <mappers>
+        <package name="com.v1.mapper"/>
+    </mappers>
+</configuration>
+```
+
+### 2.5 spring.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           https://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd
+           http://www.springframework.org/schema/aop
+           https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--1.加载外部属性文件-->
+    <context:property-placeholder location="classpath*:db.properties"
+                                  file-encoding="UTF-8"
+                                  ignore-resource-not-found="true"/>
+
+    <!--2.数据源-->
+    <bean id="ds" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="url" value="${jdbc.url}"/>
+    </bean>
+
+    <!--3.SqlSession工厂 MyBatis Plus使用MybatisSqlSessionFactoryBean-->
+    <bean class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+        <property name="dataSource" ref="ds"/>
+        <property name="configLocation" value="classpath:mybatis.xml"/>
+    </bean>
+
+    <!--4.Mapper扫描-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.v1.mapper"/>
+    </bean>
+
+    <!--5.声明式事务 事务平台管理器-->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="ds"/>
+    </bean>
+
+    <!--6.开启事务的注解支持 @Transactional-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!--7.包扫描-->
+    <context:component-scan base-package="com.v1"/>
+
+</beans>
+```
+
+### 2.6 spring-mvc.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           https://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/mvc
+           https://www.springframework.org/schema/mvc/spring-mvc.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd
+           http://www.springframework.org/schema/aop
+           https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 扫描控制器 -->
+    <context:component-scan base-package="com.v1.controller"/>
+
+    <!-- 静态资源放行：把静态资源交给Tomcat默认的Servlet处理 -->
+    <mvc:default-servlet-handler/>
+
+    <!-- 开启注解驱动 -->
+    <mvc:annotation-driven/>
+
+    <!-- 配置文件上传视图解析器 -->
+    <!-- id的值是固定的，SpringMVC程序内部使用对象名 -->
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- 设置上传文件的最大尺寸为5MB（字节为单位） -->
+        <property name="maxUploadSize" value="5242880"/>
+    </bean>
+
+</beans>
+```
+
+### 2.7 web.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+  <display-name>Archetype Created Web Application</display-name>
+
+  <!-- Web初始化参数：指定Spring配置文件位置 -->
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath*:spring.xml</param-value>
+  </context-param>
+
+  <!-- Spring MVC 乱码过滤器 -->
+  <filter>
+    <filter-name>encodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+    <!-- 强制使用指定编码 -->
+    <init-param>
+      <param-name>forceEncoding</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- ContextLoaderListener：监听Web项目启动事件，随之启动Spring框架 -->
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!-- 配置Spring MVC核心控制器 -->
+  <servlet>
+    <servlet-name>DispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:spring-mvc.xml</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>DispatcherServlet</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+</web-app>
 ```
 
