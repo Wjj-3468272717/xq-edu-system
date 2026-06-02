@@ -26,27 +26,26 @@ import java.util.Map;
  * @author v1
  * @since 2026-06-02
  */
-@Controller
+@RestController
 @RequestMapping("/membertype")
 @Slf4j
 public class MembertypeController {
     @Autowired
     MembertypeService membertypeService;
 
-    @RequestMapping("/testThymeleaf")
-    public String testThymeleaf(Model model){
-        model.addAttribute("userName","eric");
-        return "hello";
-    }
+//    @RequestMapping("/testThymeleaf")
+//    public String testThymeleaf(Model model){
+//        model.addAttribute("userName","eric");
+//        return "hello";
+//    }
 
     @RequestMapping("/list")
-    public @ResponseBody List<Membertype> list(){
+    public  List<Membertype> list(){
         List<Membertype> list = membertypeService.list();
         return list;
     }
 
-    @RequestMapping("queryPage")
-    @ResponseBody
+    @GetMapping("queryPage")
     public Map<String,Object> queryPage(String typeName, Integer pageNumber, Integer pageSize){
         Map<String,Object> resultMap = new HashMap<>();
         log.info("typeName:" + typeName);
@@ -63,7 +62,7 @@ public class MembertypeController {
     }
 
     @RequestMapping("/add")
-    @ResponseBody
+    @PostMapping
     public DataResults add(Membertype membertype){
         log.info("新增数据是："+membertype);
         membertype.setTypeDel(0);
@@ -81,7 +80,7 @@ public class MembertypeController {
      * @return
      */
     @RequestMapping("/queryById/{typeId}")
-    @ResponseBody
+    @GetMapping
     public DataResults queryById(@PathVariable("typeId") Integer typeId){
         Membertype membertype = membertypeService.getById(typeId);
         if(membertype != null){
@@ -97,7 +96,7 @@ public class MembertypeController {
      * @return
      */
     @RequestMapping("/update")
-    @ResponseBody
+    @PutMapping
     public DataResults update(Membertype membertype){
         log.info("更新之后的数据是："+membertype);
         boolean update = membertypeService.updateById(membertype);
@@ -109,7 +108,7 @@ public class MembertypeController {
     }
 
     @RequestMapping("delete/{typeId}")
-    @ResponseBody
+    @DeleteMapping
     public DataResults delete(@PathVariable Integer typeId){
         //逻辑删除
         Membertype membertype = new Membertype(typeId, 1);
