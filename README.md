@@ -425,7 +425,9 @@ log4j.logger.java.sql.PreparedStatement=DEBUG
 
 ### 2.2 Mybatis-plus代码生成器
 
-[mp官网]:  https://baomidou.com/guides/code-generator/	" 代码生成器指南"
+[mp官网]: https://baomidou.com/guides/code-generator/ "代码生成器指南"
+
+参考[mp官网]获取详细配置。
 
 ```java
 package com.v1;
@@ -592,6 +594,6 @@ public class CodeGenerator {
 
 重启tomcat，发送请求，查看页面是否渲染数据
 
-[]: http://localhost:8888/membertype/testThymeleaf
+http://localhost:8888/membertype/testThymeleaf
 
 ## 3. 会员卡功能模块实现
