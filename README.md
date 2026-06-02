@@ -743,3 +743,96 @@ $.post('/membertype/add', {
     }
 ```
 
+
+
+### 3.3 会员卡数据回显
+
+#### 3.3.1 前端分析
+
+
+
+```js
+ //查询一个对象数据回显
+            $.getJSON('/membertype/queryById/' + id, function (result) {
+                if (result.code == 200) {
+                    var data = result.data;
+                    $("#table").bootstrapTable("load", data);
+                    $("#xgname").val(data.typeName);
+                    $("#xgtianshu").val(data.typeDay);
+                    $("#xgcishu").val(data.typeciShu);
+                    $("#xgmoney").val(data.typemoney);
+                } else {
+                    swal("温馨提示！", "服务器异常", "error");
+                }
+            });
+```
+
+
+
+#### 3.3.2 后端分析
+
+
+
+```java
+    @RequestMapping("queryById")
+    @ResponseBody
+    public DataResults queryById(@PathVariable("typeId") Integer typeId){
+        Membertype membertype = membertypeService.getById(typeId);
+        if(membertype != null){
+            return DataResults.success(ResultCode.SUCCESS,membertype);
+        }else{
+            return DataResults.success(ResultCode.FAIL,null);
+        }
+    }
+```
+
+
+
+### 3.4 会员卡数据编辑
+
+
+
+#### 3.4.1 前端分析
+
+
+
+```js
+ $.ajax({
+                url: "/membertype/update",
+                type: "post",
+                data: {
+                    'typeId': id,
+                    'typeName': name,
+                    'typeciShu': cishu,
+                    'typeDay': tianshu,
+                    'typemoney': money,
+                    '_method': 'put'
+                },
+                success: function (result) {
+                    if (result.code == 200) {
+                        $("#table").bootstrapTable("load", result);
+                        $.getJSON("/membertype/queryPage", {
+                            "pageSize": opt.pageSize,
+                            "pageNumber": opt.pageNumber,
+                            "typeName": typeId
+                        }, function (releset) {
+                            $("#table").bootstrapTable('load', releset);
+                        });
+                        swal("更新！", "更新成功", "success");
+                    } else {
+                        swal("更新！", "更新失败", "error");
+                    }
+                }
+            });
+```
+
+
+
+#### 3.4.2 后端分析
+
+
+
+```java
+
+```
+

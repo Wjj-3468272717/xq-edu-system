@@ -12,11 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -76,6 +72,22 @@ public class MembertypeController {
             return DataResults.success(ResultCode.SUCCESS);
         }else{
             return DataResults.success(ResultCode.FAIL);
+        }
+    }
+
+    /**
+     * 根据会员卡id回显会员卡信息
+     * @param typeId
+     * @return
+     */
+    @RequestMapping("/queryById/{typeId}")
+    @ResponseBody
+    public DataResults queryById(@PathVariable("typeId") Integer typeId){
+        Membertype membertype = membertypeService.getById(typeId);
+        if(membertype != null){
+            return DataResults.success(ResultCode.SUCCESS,membertype);
+        }else{
+            return DataResults.success(ResultCode.FAIL,null);
         }
     }
 
