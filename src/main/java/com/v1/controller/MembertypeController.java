@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.v1.pojo.Membertype;
 import com.v1.service.MembertypeService;
+import com.v1.utils.DataResults;
+import com.v1.utils.ResultCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -41,6 +43,12 @@ public class MembertypeController {
         return "hello";
     }
 
+    @RequestMapping("/list")
+    public @ResponseBody List<Membertype> list(){
+        List<Membertype> list = membertypeService.list();
+        return list;
+    }
+
     @RequestMapping("queryPage")
     @ResponseBody
     public Map<String,Object> queryPage(String typeName, Integer pageNumber, Integer pageSize){
@@ -58,10 +66,17 @@ public class MembertypeController {
         return resultMap;
     }
 
-    @RequestMapping("/list")
-    public @ResponseBody List<Membertype> list(){
-        List<Membertype> list = membertypeService.list();
-        return list;
+    @RequestMapping("/add")
+    @ResponseBody
+    public DataResults add(Membertype membertype){
+        log.info("新增数据是："+membertype);
+        membertype.setTypeDel(0);
+        boolean save = membertypeService.save(membertype);
+        if(save){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
     }
 
 }
