@@ -40,9 +40,9 @@ public class MembertypeController {
 //    }
 
     @RequestMapping("/list")
-    public  List<Membertype> list(){
-        List<Membertype> list = membertypeService.list();
-        return list;
+    public  DataResults<Membertype> list(){
+        List<Membertype> list = membertypeService.list(new QueryWrapper<Membertype>().eq("typeDel",0));
+        return DataResults.success(ResultCode.SUCCESS,list);
     }
 
     @GetMapping("queryPage")

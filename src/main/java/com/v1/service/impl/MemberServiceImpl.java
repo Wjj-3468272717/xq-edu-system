@@ -4,7 +4,12 @@ import com.v1.pojo.Member;
 import com.v1.mapper.MemberMapper;
 import com.v1.service.MemberService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -17,4 +22,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> implements MemberService {
 
+    @Autowired
+    MemberMapper memberMapper;
+
+    @Override
+    public int totalCount(Map<String, Object> paramMap) {
+        return memberMapper.totalCount(paramMap);
+    }
+
+    @Override
+    public List<Member> pageMembers(Map<String, Object> paramMap) {
+        return memberMapper.pageMembers(paramMap);
+    }
 }

@@ -5,8 +5,10 @@ import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
@@ -18,6 +20,8 @@ import lombok.experimental.Accessors;
  * @since 2026-06-03
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 public class Member implements Serializable {
@@ -43,7 +47,7 @@ public class Member implements Serializable {
     private Integer memberTypes;
 
     @TableField("nenberDate")
-    private LocalDate nenberDate;
+    private String nenberDate;
 
     private String birthday;
 
@@ -52,11 +56,11 @@ public class Member implements Serializable {
 
     private Float memberbalance;
 
-    private LocalDate memberxufei;
+    private String memberxufei;
 
     private Integer del;
 
-    @TableField("memberStatic")
+//    @TableField("memberStatic")
     private Membertype membertype;
 
     public Member(Integer memberId, Integer del){

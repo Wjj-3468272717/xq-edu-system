@@ -175,7 +175,7 @@
         //查询
         function search(){
             var opt=$('#dg').bootstrapTable('getOptions');
-            var hyid=$('#hyid').val();
+            var hyid=$('#hyname').val();
             var ktype=$('#ktype').val();
             $.getJSON("/member/queryPage",{"pageSize":opt.pageSize,"pageNumber":1,"hyname":hyid,"ktype":ktype},function (releset) {
                 $("#dg").bootstrapTable('load',releset) ;
@@ -211,7 +211,7 @@
 
 
         function del(memid) {
-            $.post("/menber/delete",{"memid":memid},function (releset) {
+            $.post("/member/delete",{"memid":memid},function (releset) {
                 if(releset != null){
                     $("#dg").bootstrapTable('load',releset) ;
                     swal(
