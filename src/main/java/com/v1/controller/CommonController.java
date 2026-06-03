@@ -20,4 +20,9 @@ public class CommonController {
         return "equipment";
     }
 
+    @RequestMapping("subject.html")
+    public String toSubject(){
+        return "subject";
+    }
+
 }
