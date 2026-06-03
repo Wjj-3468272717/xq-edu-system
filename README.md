@@ -743,13 +743,9 @@ $.post('/membertype/add', {
     }
 ```
 
-
-
 ### 3.3 回显-会员卡数据
 
 #### 3.3.1 前端分析
-
-
 
 ```js
  //查询一个对象数据回显
@@ -767,15 +763,13 @@ $.post('/membertype/add', {
             });
 ```
 
-
-
 #### 3.3.2 后端分析
 
-
+接口传入参数：param1 typeId
 
 ```java
-    @RequestMapping("queryById")
-    @ResponseBody
+    @RequestMapping("/queryById/{typeId}")
+    @GetMapping
     public DataResults queryById(@PathVariable("typeId") Integer typeId){
         Membertype membertype = membertypeService.getById(typeId);
         if(membertype != null){
@@ -786,15 +780,9 @@ $.post('/membertype/add', {
     }
 ```
 
-
-
 ### 3.4 编辑-会员卡数据
 
-
-
 #### 3.4.1 前端分析
-
-
 
 ```js
  $.ajax({
@@ -826,11 +814,9 @@ $.post('/membertype/add', {
             });
 ```
 
-
-
 #### 3.4.2 后端分析
 
-
+接口传入参数：param1 membertype
 
 ```java
     @RequestMapping("/update")
@@ -846,15 +832,9 @@ $.post('/membertype/add', {
     }
 ```
 
-
-
 ### 3.5 删除-会员卡数据
 
-
-
 #### 3.5.1 前端分析
-
-
 
 ```js
  //删除
@@ -897,11 +877,9 @@ $.post('/membertype/add', {
                 });
 ```
 
-
-
 #### 3.5.2 后端分析
 
-
+接口传入参数：param1 typeId
 
 ```java
     @RequestMapping("delete/{typeId}")
@@ -925,8 +903,6 @@ $.post('/membertype/add', {
 ### 4.1 分页查询-教学器材
 
 #### 4.1.1 前端分析
-
-
 
 ```js
 $('#table').bootstrapTable({
@@ -963,11 +939,7 @@ $('#table').bootstrapTable({
             });
 ```
 
-
-
 #### 4.1.2 后端分析
-
-
 
 ```java
     @GetMapping("/queryPage")
@@ -983,15 +955,9 @@ $('#table').bootstrapTable({
     }
 ```
 
-
-
 ### 4.2 新增-教学器材
 
-
-
 #### 4.2.1 前端分析
-
-
 
 ```js
 $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
@@ -1010,11 +976,7 @@ $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
             }, "json");
 ```
 
-
-
-#### 4.2.2 后端分析
-
-
+#### 4.2.2  后端分析
 
 ```java
 @PostMapping("/add")
@@ -1029,15 +991,9 @@ $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
     }
 ```
 
-
-
-### 4.3 删除-教学器材
-
-
+### 4. 删除-教学器材
 
 #### 4.3.1 前端分析
-
-
 
 ```js
  $.post("/equipment/delete/" + eqId, {"_method": "delete"}, function (releset) {
@@ -1065,11 +1021,7 @@ $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
             })
 ```
 
-
-
 #### 4.3.2 后端分析
-
-
 
 ```java
     @DeleteMapping("/delete/{eqId}")
@@ -1084,13 +1036,9 @@ $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
     }
 ```
 
-
-
 ### 4.4 回显-教学器材
 
 #### 4.4.1 前端分析 
-
-
 
 ```js
 $.getJSON('/equipment/queryById/' + id, function (result) {
@@ -1105,11 +1053,7 @@ $.getJSON('/equipment/queryById/' + id, function (result) {
             });
 ```
 
-
-
 #### 4.4.2 后端分析
-
-
 
 ```java
     @RequestMapping("/queryById/{typeId}")
@@ -1124,11 +1068,7 @@ $.getJSON('/equipment/queryById/' + id, function (result) {
     }
 ```
 
-
-
 ### 4.5 更新-教学器材
-
-
 
 #### 4.5.1 前端分析
 
@@ -1160,11 +1100,7 @@ $.ajax({
             });
 ```
 
-
-
 #### 4.5.2 后端分析
-
-
 
 ```java
     @RequestMapping("/update")
@@ -1180,6 +1116,223 @@ $.ajax({
     }
 ```
 
-
-
 ## 5. 课程模块功能实现
+
+### 5.1 分页查询-课程信息
+
+#### 5.1.1 前端分析
+
+```js
+$('#table').bootstrapTable({
+                url: '/subject/queryPage',
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                columns: [
+                    {field: 'subId', title: '课程编号', sortable: true},
+                    {field: 'subname', title: '课程名称', sortable: true},
+                    {field: 'sellingPrice', title: '课程售价', sortable: true},
+                    {
+                        field: 'xx', title: '操作',
+                        formatter: function (value, row, index) {
+                            return "<a title='删除' href='javascript:del1("
+                                + row.subId + ")'><span class='glyphicon glyphicon-trash'></span></a> | <a href='javascript:upd1(" + row.subId + ")' class='glyphicon glyphicon-pencil'></a>";
+                        }
+
+                    }
+                ],
+                queryParamsType: '',
+                queryParams: queryParams,
+                height: 360,
+                pageList: [5, 10, 15],
+                pageNumber: 1,
+                pageSize: 5,
+                pagination: true,
+                sidePagination: 'server',
+
+            })
+        });
+```
+
+#### 5.1.2后端分析
+
+```java
+    @GetMapping("/queryPage")
+    public Map<String, Object> queryPage(String subname, Integer pageSize, Integer pageNumber) {
+        Map<String, Object> res = new HashMap<>();
+        QueryWrapper<Subject> queryWrapper = new QueryWrapper<Subject>().like(subname != null && !subname.equals(""), "subname", subname);
+        queryWrapper.eq("del",0);
+        IPage<Subject> page = subjectService.page(new Page<Subject>(pageNumber, pageSize), queryWrapper);
+        res.put("total",page.getTotal());
+        res.put("rows",page.getRecords());
+        return res;
+    }
+```
+
+### 5.2 新增-课程信息
+
+#### 5.2.1 前端分析
+
+1. 新增课程是否已经操作(根据课程名称)
+2. 如果不存在则新增数据
+
+```js
+$.getJSON("/subject/subnameExist", {"subname": name}, function (releset) {
+                $("#table").bootstrapTable('load', releset.data);
+                if (releset.data < 1) { // releset.data 记录在数据库查询数据的记录条数
+                    $.post('/subject/add', {
+                        'subname': name,
+                        'sellingPrice': money
+                    }, function (data) {
+                        $("#table").bootstrapTable("load", data);
+                        $.getJSON("/subject/queryPage", {
+                            "pageSize": opt.pageSize,
+                            "pageNumber": opt.pageNumber,
+                            "subname": subjectid
+                        }, function (releset) {
+                            $("#table").bootstrapTable('load', releset.data);
+                        });
+                        swal("添加！", "添加成功",
+                            "success");
+                        search();
+                    });
+                } else if (releset.data > 0) {
+                    swal("失败！", "已有该课程，请重新输入！", "error");
+                    $.getJSON("/subject/queryPage", {
+                        "pageSize": opt.pageSize,
+                        "pageNumber": opt.pageNumber,
+                        "subname": subjectid
+                    }, function (releset) {
+                        $("#table").bootstrapTable('load', releset.data);
+                    })
+                }
+            })
+```
+
+#### 5.2.2 后端分析
+
+```java
+    @GetMapping("/subnameExist")
+    public DataResults subNameExist(String subname){
+        //select count(*) from subject where subname = ? and del = ?
+        int count = subjectService.count(new QueryWrapper<Subject>().eq("subname", subname).eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS,count);
+    }
+
+    @PostMapping("/add")
+    public DataResults add(Subject subject){
+        log.info("要新增的数据是："+subject);
+        subject.setDel(0);
+        boolean saved = subjectService.save(subject);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 5.3 删除-课程信息
+
+#### 5.3.1 前端分析
+
+```js
+$.post('/subject/delete/'+id, {
+                            "_method": 'delete'
+                        }, function (result) {
+                            if (result.code == 200) {
+                                $.getJSON("/subject/queryPage", {
+                                    "pageSize": opt.pageSize,
+                                    "pageNumber": opt.pageNumber,
+                                    "subname": subjectid
+                                }, function (releset) {
+                                    $("#table").bootstrapTable('load', releset);
+                                });
+                                swal("删除！", "删除成功", "success");
+                            } else {
+                                swal("删除！", "删除失败", "error");
+                            }
+                        });
+```
+
+#### 5.3.2  后端分析
+
+```java
+    @DeleteMapping("/delete/{id}")
+    public DataResults delete(@PathVariable("id") Integer id){
+        Subject subject = new Subject(id,1);
+        boolean updated = subjectService.updateById(subject);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 5.4 回显-课程信息
+
+#### 5.4.1前端分析
+
+```js
+$.getJSON('/subject/queryById/' + id, function (result) {
+                $("#table").bootstrapTable("load", result);
+                $("#xgname").val(result.data.subname);
+                $("#xgmoney").val(result.data.sellingPrice);
+            });
+```
+
+#### 5.4.2 后端分析
+
+```java
+    @GetMapping("/queryById/{id}")
+    public DataResults queryById(@PathVariable("id") Integer id){
+        Subject subject = subjectService.getById(id);
+        if(subject != null){
+            return DataResults.success(ResultCode.SUCCESS,subject);
+        }else{
+            return DataResults.success(ResultCode.FAIL,null);
+        }
+    }
+```
+
+### 5.5 更新-课程信息
+
+5.5.1 前端分析
+
+```js
+$.post('/subject/update', {
+                'subId': id,
+                'subname': name,
+                'sellingPrice': money,
+                '_method': 'put'
+            }, function (result) {
+                if (result.code == 200) {
+                    //$("#table").bootstrapTable("load", result);
+                    $.getJSON("/subject/queryPage", {
+                        "pageSize": opt.pageSize,
+                        "pageNumber": opt.pageNumber,
+                        "subname": subjectid
+                    }, function (releset) {
+                        $("#table").bootstrapTable('load', releset);
+                    });
+                    swal("更新！", "更新成功", "success");
+                } else {
+                    swal("更新！", "更新失败", "error");
+                }
+            });
+```
+
+5.5.2 后端分析
+
+```java
+    @PutMapping("/update")
+    public DataResults update(Subject subject){
+        boolean updated = subjectService.updateById(subject);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+```
+
