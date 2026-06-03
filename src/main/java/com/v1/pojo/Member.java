@@ -60,7 +60,7 @@ public class Member implements Serializable {
 
     private Integer del;
 
-//    @TableField("memberStatic")
+    @TableField(exist = false)
     private Membertype membertype;
 
     public Member(Integer memberId, Integer del){

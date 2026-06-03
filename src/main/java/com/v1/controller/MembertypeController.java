@@ -120,4 +120,11 @@ public class MembertypeController {
         }
     }
 
+    @GetMapping("/getDays/{typeId}")
+    public DataResults getDays(@PathVariable("typeId") Integer typeId){
+        Membertype membertype = membertypeService.getById(typeId);
+        return DataResults.success(ResultCode.SUCCESS,membertype);
+    }
+
+
 }
