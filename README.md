@@ -598,7 +598,7 @@ http://localhost:8888/membertype/testThymeleaf
 
 ## 3. 会员卡功能模块实现
 
-### 3.1 会员卡类型分页查询
+### 3.1 分页查询-会员卡类型
 
 需求：打开会员卡页面member-type.html，展示会员卡数据；进行会员卡名称进行 条件查询，也能分页展示会员卡数据。
 
@@ -690,7 +690,7 @@ http://localhost:8888/membertype/testThymeleaf
     }
 ```
 
-### 3.2  新增会员卡信息
+### 3.2  新增-会员卡信息
 
 需求：点击添加会员卡按钮，完成会员卡信息的添加。
 
@@ -745,7 +745,7 @@ $.post('/membertype/add', {
 
 
 
-### 3.3 会员卡数据回显
+### 3.3 回显-会员卡数据
 
 #### 3.3.1 前端分析
 
@@ -788,7 +788,7 @@ $.post('/membertype/add', {
 
 
 
-### 3.4 会员卡数据编辑
+### 3.4 编辑-会员卡数据
 
 
 
@@ -848,7 +848,7 @@ $.post('/membertype/add', {
 
 
 
-### 3.5 会员卡数据删除
+### 3.5 删除-会员卡数据
 
 
 
@@ -922,7 +922,7 @@ $.post('/membertype/add', {
 
 ## 4. 教学器材模块功能实现
 
-### 4.1 教学器材分页查询
+### 4.1 分页查询-教学器材
 
 #### 4.1.1 前端分析
 
@@ -985,7 +985,7 @@ $('#table').bootstrapTable({
 
 
 
-### 4.2 新增教学器材
+### 4.2 新增-教学器材
 
 
 
@@ -1031,11 +1031,11 @@ $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
 
 
 
-### 4.3 删除教学器材
+### 4.3 删除-教学器材
 
 
 
-#### 4.3.1
+#### 4.3.1 前端分析
 
 
 
@@ -1067,4 +1067,116 @@ $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
 
 
 
-#### 4.3.2
+#### 4.3.2 后端分析
+
+
+
+```java
+    @DeleteMapping("/delete/{eqId}")
+    public DataResults delete(@PathVariable("eqId") Integer eqId) {
+        Equipment equipment = new Equipment(eqId, 1);
+        boolean updated = equipmentService.updateById(equipment);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        } else {
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+
+
+### 4.4 回显-教学器材
+
+#### 4.4.1 前端分析 
+
+
+
+```js
+$.getJSON('/equipment/queryById/' + id, function (result) {
+                if (result.code == 200) {
+                    var data = result.data;
+                    $("#table").bootstrapTable("load", data);
+                    $("#xgname").val(data.eqName);
+                    $("#xgtext").val(data.eqText);
+                } else {
+                    swal("温馨提示！", "服务器异常", "error");
+                }
+            });
+```
+
+
+
+#### 4.4.2 后端分析
+
+
+
+```java
+    @RequestMapping("/queryById/{typeId}")
+    @GetMapping
+    public DataResults queryById(@PathVariable("typeId") Integer typeId){
+        Equipment equipment = equipmentService.getById(typeId);
+        if(equipment != null){
+            return DataResults.success(ResultCode.SUCCESS,equipment);
+        }else{
+            return DataResults.success(ResultCode.FAIL,null);
+        }
+    }
+```
+
+
+
+### 4.5 更新-教学器材
+
+
+
+#### 4.5.1 前端分析
+
+```js
+$.ajax({
+                url: "/equipment/update",
+                type: "post",
+                data: {
+                    'eqId': id,
+                    'eqName': name,
+                    'eqText': text1,
+                    '_method': 'put'
+                },
+                success: function (result) {
+                    if (result.code == 200) {
+                        $("#table").bootstrapTable("load", result);
+                        $.getJSON("/equipment/queryPage", {
+                            "pageSize": opt.pageSize,
+                            "pageNumber": opt.pageNumber,
+                            "eqName": $('#eqname').val()
+                        }, function (releset) {
+                            $("#table").bootstrapTable('load', releset);
+                        });
+                        swal("更新！", "更新成功", "success");
+                    } else {
+                        swal("更新！", "更新失败", "error");
+                    }
+                }
+            });
+```
+
+
+
+#### 4.5.2 后端分析
+
+
+
+```java
+    @RequestMapping("/update")
+    @PutMapping
+    public DataResults update(Equipment equipment){
+        log.info("更新之后的数据是："+equipment);
+        boolean update = equipmentService.updateById(equipment);
+        if(update){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+```
+
