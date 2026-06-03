@@ -166,7 +166,7 @@
             var i={
                 "pageSize":afds.pageSize,
                 "pageNumber":afds.pageNumber,
-                "id":$('#hyid').val(),
+                "hyname":$('#hyid').val(),
                 "ktype":$('#ktype').val()
 
             };
@@ -175,7 +175,7 @@
         //查询
         function search(){
             var opt=$('#dg').bootstrapTable('getOptions');
-            var hyid=$('#hyname').val();
+            var hyid=$('#hyid').val();
             var ktype=$('#ktype').val();
             $.getJSON("/member/queryPage",{"pageSize":opt.pageSize,"pageNumber":1,"hyname":hyid,"ktype":ktype},function (releset) {
                 $("#dg").bootstrapTable('load',releset) ;
