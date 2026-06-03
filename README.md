@@ -1297,7 +1297,7 @@ $.getJSON('/subject/queryById/' + id, function (result) {
 
 ### 5.5 更新-课程信息
 
-5.5.1 前端分析
+#### 5.5.1 前端分析
 
 ```js
 $.post('/subject/update', {
@@ -1322,7 +1322,7 @@ $.post('/subject/update', {
             });
 ```
 
-5.5.2 后端分析
+#### 5.5.2 后端分析
 
 ```java
     @PutMapping("/update")
@@ -1336,3 +1336,4 @@ $.post('/subject/update', {
     }
 ```
 
+## 6. 学院管理功能模块

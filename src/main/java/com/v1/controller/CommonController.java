@@ -25,4 +25,14 @@ public class CommonController {
         return "subject";
     }
 
+    @RequestMapping("index.html")
+    public String toIndexPage(){
+        return "index";
+    }
+
+    @RequestMapping("home.html")
+    public String toHomePage(){
+        return "home";
+    }
+
 }
