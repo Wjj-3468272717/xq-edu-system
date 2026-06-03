@@ -12,7 +12,12 @@ public class CommonController {
      */
     @RequestMapping("member-type.html")
     public String toMemberType(){
-        return "member-type.html";
+        return "member-type";
+    }
+
+    @RequestMapping("equipment.html")
+    public String toEquipment(){
+        return "equipment";
     }
 
 }
