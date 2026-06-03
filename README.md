@@ -918,3 +918,153 @@ $.post('/membertype/add', {
     }
 ```
 
+
+
+## 4. 教学器材模块功能实现
+
+### 4.1 教学器材分页查询
+
+#### 4.1.1 前端分析
+
+
+
+```js
+$('#table').bootstrapTable({
+                url: '/equipment/queryPage',
+                columns: [
+                    {
+                        field: 'eqId',
+                        title: '编号'
+                    }, {
+                        field: 'eqName',
+                        title: '器材名称'
+                    }, {
+                        field: 'eqText',
+                        title: '器材说明'
+                    },
+                    {
+                        field: 'xx', title: '操作',
+                        formatter: function (value, row, index) {
+                            return "<a title='删除' href='javascript:del("
+                                + row.eqId + ")'><span class='glyphicon glyphicon-trash'></span></a>";
+                        }
+                    }
+                ],
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                queryParamsType: '',
+                queryParams: queryParams,
+                height: 360,
+                pageList: [5, 10, 15],
+                pageNumber: 1,
+                pageSize: 5,
+                pagination: true,
+                sidePagination: 'server',
+            });
+```
+
+
+
+#### 4.1.2 后端分析
+
+
+
+```java
+    @GetMapping("/queryPage")
+    public Map<String,Object> queryPage(String eqName, Integer pageNumber, Integer pageSize){
+        Map<String,Object> res = new HashMap<>();
+        QueryWrapper<Equipment> q = new QueryWrapper<>();
+        q.like(eqName != null && !eqName.equals(""),"eqName",eqName);
+        q.eq("del",0);//逻辑删除的数据不查询
+        IPage<Equipment> page = equipmentService.page(new Page<Equipment>(pageNumber, pageSize), q);
+        res.put("total",page.getTotal());
+        res.put("rows",page.getRecords());
+        return res;
+    }
+```
+
+
+
+### 4.2 新增教学器材
+
+
+
+#### 4.2.1 前端分析
+
+
+
+```js
+$.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
+                alert(JSON.stringify(releset)); // {"code":403,"msg":"暂无权限操作"}
+                if (releset.code == 200) {
+                    $("#table").bootstrapTable('load', releset);
+                    $('#exampleModal').modal('hide');
+                    //新增成功之后渲染数据重写查询
+                    swal("添加！", "添加成功", "success");
+                    chaxun();
+                } else if (releset.code == 403) {
+                    swal("添加！", "添加没有权限", "error");
+                } else {
+                    swal("添加！", "添加失败", "error");
+                }
+            }, "json");
+```
+
+
+
+#### 4.2.2 后端分析
+
+
+
+```java
+@PostMapping("/add")
+    public DataResults add(Equipment equipment){
+        equipment.setDel(0);
+        boolean saved = equipmentService.save(equipment);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+
+
+### 4.3 删除教学器材
+
+
+
+#### 4.3.1
+
+
+
+```js
+ $.post("/equipment/delete/" + eqId, {"_method": "delete"}, function (releset) {
+                if (releset.code == 200) {
+                    $("#dg").bootstrapTable('load', releset);
+                    swal(
+                        {
+                            title: "删除成功",
+                            type: "success",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    );
+                    search();
+                } else {
+                    swal(
+                        {
+                            title: "删除失败",
+                            type: "warning",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    )
+                }
+            })
+```
+
+
+
+#### 4.3.2

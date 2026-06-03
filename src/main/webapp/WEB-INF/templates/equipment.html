@@ -35,8 +35,7 @@
                     {
                         field: 'xx', title: '操作',
                         formatter: function (value, row, index) {
-                            return "<a title='删除' href='javascript:del("
-                                + row.eqId + ")'><span class='glyphicon glyphicon-trash'></span></a>";
+                            return "<a href='javascript:del(" + row.eqId + ")' class='glyphicon glyphicon-trash'>&nbsp;&nbsp;</a><a href='javascript:upd1(" + row.eqId + ")' class='glyphicon glyphicon-pencil'></a>";
                         }
                     }
                 ],
@@ -58,7 +57,7 @@
             var i = {
                 "pageSize": afds.pageSize,
                 "pageNumber": afds.pageNumber,
-                "id": $('#eqName').val(),
+                "eqName": $('#eqname').val(),
             };
             return i;
         }
@@ -79,7 +78,7 @@
         function del(eqId) {
             $.post("/equipment/delete/" + eqId, {"_method": "delete"}, function (releset) {
                 if (releset.code == 200) {
-                    $("#dg").bootstrapTable('load', releset);
+                    $("#table").bootstrapTable('load', releset);
                     swal(
                         {
                             title: "删除成功",
@@ -117,7 +116,7 @@
             var name = $('#upname').val();
             var text1 = $('#uptext').val();
             $.post("/equipment/add", {"eqName": name, "eqText": text1}, function (releset) {
-                alert(JSON.stringify(releset)); // {"code":403,"msg":"暂无权限操作"}
+                // alert(JSON.stringify(releset)); // {"code":403,"msg":"暂无权限操作"}
                 if (releset.code == 200) {
                     $("#table").bootstrapTable('load', releset);
                     $('#exampleModal').modal('hide');
@@ -137,6 +136,76 @@
             var upname = $("#upname").val().trim();
             if (upname == null || upname == "") {
                 $("#upname").parent().append("<span style='color:red'>请输入器材名称</span>");
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * 弹出一个更新模态框，回显数据
+         * @param id
+         */
+        function upd1(id) {
+            //弹出一个更新模态框
+            $("#myModal2").modal("show");
+            //模态框隐藏ID值
+            $('#xgeid').val(id);
+            //查询一个对象数据回显
+            $.getJSON('/equipment/queryById/' + id, function (result) {
+                if (result.code == 200) {
+                    var data = result.data;
+                    $("#table").bootstrapTable("load", data);
+                    $("#xgname").val(data.eqName);
+                    $("#xgtext").val(data.eqText);
+                } else {
+                    swal("温馨提示！", "服务器异常", "error");
+                }
+            });
+        }
+
+        //更新
+        function upd() {
+            if (!validateUpd()) {
+                return;
+            }
+            var opt = $('#table').bootstrapTable('getOptions');
+            var id = $('#xgeid').val();
+            var name = $("#xgname").val();
+            var text1 = $("#xgtext").val();
+            $("#myModal2").modal("hide");
+
+            $.ajax({
+                url: "/equipment/update",
+                type: "post",
+                data: {
+                    'eqId': id,
+                    'eqName': name,
+                    'eqText': text1,
+                    '_method': 'put'
+                },
+                success: function (result) {
+                    if (result.code == 200) {
+                        $("#table").bootstrapTable("load", result);
+                        $.getJSON("/equipment/queryPage", {
+                            "pageSize": opt.pageSize,
+                            "pageNumber": opt.pageNumber,
+                            "eqName": $('#eqname').val()
+                        }, function (releset) {
+                            $("#table").bootstrapTable('load', releset);
+                        });
+                        swal("更新！", "更新成功", "success");
+                    } else {
+                        swal("更新！", "更新失败", "error");
+                    }
+                }
+            });
+        }
+
+        function validateUpd() {
+            $("#xgname").parent().find("span").remove();
+            var xgname = $("#xgname").val().trim();
+            if (xgname == null || xgname == "") {
+                $("#xgname").parent().append("<span style='color:red'>请输入器材名称</span>");
                 return false;
             }
             return true;
@@ -189,6 +258,38 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" onclick="tianjia()">添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--更新模态框-->
+<div class="modal fade" id="myModal2">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel2">修改器材信息</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="hidden" id="xgeid" name="xgeid">
+                    <div class="form-group">
+                        <label class="control-label">器材名称:</label>
+                        <input type="text" class="form-control" id="xgname">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">器材说明:</label>
+                        <input type="text" class="form-control" id="xgtext">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button onclick="upd()" type="button" class="btn btn-primary">修改</button>
             </div>
         </div>
     </div>
