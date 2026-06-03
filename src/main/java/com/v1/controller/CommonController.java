@@ -35,4 +35,9 @@ public class CommonController {
         return "home";
     }
 
+    @RequestMapping("member.html")
+    public String toMemberPage(){
+        return "member";
+    }
+
 }
