@@ -56,4 +56,14 @@ public class CommonController {
         return "member-charge-records";
     }
 
+    @RequestMapping("member-card.html")
+    public String toMemberCar(){
+        return "member-card";
+    }
+
+    @RequestMapping("member-cardextend-records.html")
+    public String toMemberCarRecords(){
+        return "member-cardextend-records";
+    }
+
 }
