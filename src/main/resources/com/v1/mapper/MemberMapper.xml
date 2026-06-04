@@ -37,6 +37,9 @@
         <if test="ktype != null and ktype !=0">
             and memberTypes = #{ktype}
         </if>
+        <if test="nowTime != null and nowTime != ''">
+            and memberxufei &lt; #{nowTime}
+        </if>
         limit #{pageStart},#{pageSize}
     </select>
 
@@ -50,6 +53,9 @@
 
         <if test="ktype != null and ktype !=0">
             and memberTypes = #{ktype}
+        </if>
+        <if test="nowTime != null and nowTime != ''">
+            and memberxufei &lt; #{nowTime}
         </if>
 
     </select>

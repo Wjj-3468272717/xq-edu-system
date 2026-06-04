@@ -126,5 +126,4 @@ public class MembertypeController {
         return DataResults.success(ResultCode.SUCCESS,membertype);
     }
 
-
 }

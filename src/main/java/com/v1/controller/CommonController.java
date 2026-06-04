@@ -40,4 +40,9 @@ public class CommonController {
         return "member";
     }
 
+    @RequestMapping("memeber-expire.html")
+    public String toMemberExpire(){
+        return "memeber-expire";
+    }
+
 }

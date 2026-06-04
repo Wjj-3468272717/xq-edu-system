@@ -1336,4 +1336,364 @@ $.post('/subject/update', {
     }
 ```
 
-## 6. 学院管理功能模块
+## 6. vip学员管理功能模块
+
+### 6.1 分页查询-vip学员信息
+
+#### 6.1.1 前端分析
+
+```js
+$.getJSON("/member/queryPage",{"pageSize":opt.pageSize,"pageNumber":1,"hyname":hyid,"ktype":ktype},function (releset) {
+                $("#dg").bootstrapTable('load',releset) ;
+            })
+```
+
+#### 6.1.2 后端分析
+
+卡类型属于member-type表，其他信息属于member表。
+
+查询学员信息需要根据typeId进行联表查询
+
+控制器方法：
+
+```java
+ @GetMapping("queryPage")
+    public Map<String,Object> queryPage(String hyname, Integer ktype, Integer pageSize, Integer pageNumber){
+        Map<String,Object> resMap = new HashMap<>();
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("hyname",hyname);
+        paramMap.put("ktype",ktype);
+        if(pageSize == null){
+            pageSize = 10;
+        }
+        if(pageNumber == null){
+            pageNumber = 1;
+        }
+        paramMap.put("pageStart",(pageNumber - 1) * pageSize);
+        paramMap.put("pageSize",pageSize);
+
+        int totalCount = memberService.totalCount(paramMap);
+        List<Member> list = memberService.pageMembers(paramMap);
+        resMap.put("total",totalCount);
+        resMap.put("rows",list);
+        return resMap;
+    }
+```
+
+声明映射关系：
+
+```xml
+    <resultMap id="memberMap" type="member">
+        <id column="memberId" property="memberId"></id>
+        <result column="memberName" property="memberName"></result>
+        <result column="memberPhone" property="memberPhone"></result>
+        <result column="memberSex" property="memberSex"></result>
+        <result column="memberAge" property="memberAge"></result>
+        <result column="memberTypes" property="memberTypes"></result>
+        <result column="nenberDate" property="nenberDate"></result>
+        <result column="birthday" property="birthday"></result>
+        <result column="memberStatic" property="memberStatic"></result>
+        <result column="memberbalance" property="memberbalance"></result>
+        <result column="memberxufei" property="memberxufei"></result>
+        <association property="membertype" javaType="membertype">
+            <id column="typeId" property="typeId"></id>
+            <result column="typeName" property="typeName"></result>
+            <result column="typeciShu" property="typeciShu"></result>
+            <result column="typeDay" property="typeDay"></result>
+            <result column="typemoney" property="typemoney"></result>
+        </association>
+    </resultMap>
+```
+
+持久层方法：
+
+```java
+public interface MemberMapper extends BaseMapper<Member> {
+
+    List<Member> pageMembers(Map<String, Object> paramMap);
+
+    int totalCount(Map<String, Object> paramMap);
+}
+```
+
+```xml
+    <!--    List<Member> pageMembers(Map<String, Object> paramMap);-->
+    <select id="pageMembers" resultMap="memberMap">
+        select * from member inner join membertype on member.memberTypes = memberType.typeId
+        where member.del = 0 and membertype.typeDel = 0
+        <if test="hyname != null and hyname !='' ">
+            and memberName like '%${hyname}%'
+        </if>
+
+        <if test="ktype != null and ktype !=0">
+            and memberTypes = #{ktype}
+        </if>
+        limit #{pageStart},#{pageSize}
+    </select>
+
+    <!--    int totalCount(Map<String, Object> paramMap);-->
+    <select id="totalCount" resultType="int">
+        select count(*) from member inner join membertype on member.memberTypes = memberType.typeId
+        where member.del = 0 and membertype.typeDel = 0
+        <if test="hyname != null and hyname !='' ">
+            and memberName like '%${hyname}%'
+        </if>
+
+        <if test="ktype != null and ktype !=0">
+            and memberTypes = #{ktype}
+        </if>
+    </select>
+```
+
+### 6.2  新增-学员信息
+
+#### 6.2.1 前端分析
+
+新增的学员要根据会员卡类型获取到期的时间
+
+```js
+//根据会员卡类型查询会员卡天数
+            $.getJSON("/membertype/getDays/"+optype,{},function (releset) {
+
+                //会员卡对应的天数
+                var typetian=releset.data.typeDay;
+                var date1 = new Date();
+
+                var date2 = new Date(date1);
+                //续费时间
+                date2.setDate(date1.getDate() + typetian);
+                //格式化续费时间
+                var rq=date2.getFullYear() + "-" + (date2.getMonth() + 1) + "-" + date2.getDate();
+                $.post("/member/add",{"memberName":name,"memberPhone":phone,"memberSex":sex,"birthday":srdata,"memberTypes":optype,"nenberDate":data,"memberAge":age,"memberxufei":rq},function (releset) {
+                    if(releset.code == 200){
+                        $("#dg").bootstrapTable('load',releset) ;
+                        $('#exampleModal').modal('hide');
+                        swal(
+                            {
+                                title:"添加成功",
+                                type:"success",
+                                timer: 1500,
+                                showConfirmButton: false
+                            }
+                        );
+                        //查询
+                        search();
+                    }else{
+                        swal(
+                            {
+                                title:"添加失败",
+                                type:"warning",
+                                timer: 1500,
+                                showConfirmButton: false
+                            }
+                        )
+                    }
+                })
+            })
+```
+
+#### 6.2.2后端分析
+
+1. 根据typeId获取到memebr-type，前端会计算到期时间
+2. 添加学员信息 
+
+```java
+    @GetMapping("/getDays/{typeId}")
+    public DataResults getDays(@PathVariable("typeId") Integer typeId){
+        Membertype membertype = membertypeService.getById(typeId);
+        return DataResults.success(ResultCode.SUCCESS,membertype);
+    }
+```
+
+```java
+    @PostMapping("/add")
+    public DataResults add(Member member){
+        member.setMemberbalance(0.0F);
+        member.setMemberStatic(1);
+        member.setDel(0);
+        boolean saved = memberService.save(member);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 6.3 更新-vip学员信息
+
+#### 6.3.1 前端分析
+
+学员信息更改后，如果学员信息发生更改，到期时间也要随之更改
+
+```js
+$.getJSON("/membertype/getDays/"+optype,{},function (releset) {
+                var typetian=releset.data.typeDay;
+                //alert("开卡日期:"+data);
+                var date1 = new Date(data); //开卡日期
+
+                //alert("开卡日期:"+date1);
+                var date2 = new Date(date1);
+                var qb=date2.setDate(date1.getDate() + typetian);
+                var rq=date2.getFullYear() + "-" + (date2.getMonth() + 1) + "-" + date2.getDate();
+                $.post("/member/update",{"_method":"put","memberId":id,"memberName":name,"memberPhone":phone,"memberSex":sex,"birthday":srdata,"memberTypes":optype,"nenberDate":data,"memberAge":age,"memberxufei":rq},function (releset) {
+                    $("#dg").bootstrapTable('load',releset) ;
+                    if(releset.code==200){
+                        $("#dg").bootstrapTable('load',releset) ;
+                        $('#updateeModal').modal('hide');
+                        swal(
+                            {
+                                title:"修改成功",
+                                type:"success",
+                                timer: 1500,
+                                showConfirmButton: false
+                            }
+                        );
+                        //查询
+                        search();
+                    }else{
+                        swal(
+                            {
+                                title:"修改失败",
+                                type:"warning",
+                                timer: 1500,
+                                showConfirmButton: false
+                            }
+                        )
+                    }
+                })
+            })
+```
+
+#### 6.3.2 后端分析
+
+1. 根据typeId获取到memebr-type，前端会计算到期时间
+2. 添加学员信息 
+
+```java
+    @PutMapping("update")
+    public DataResults update(Member member){
+        member.setDel(0);
+        boolean updated = memberService.updateById(member);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 6.3 回显-vip学员信息
+
+#### 6.3.1 前端分析
+
+```js
+$.getJSON('/member/queryById/' + memberId, function (result) {
+                if (result.code == 200) {
+                    var data = result.data;
+                    //alert(JSON.stringify(data));
+                    $('#updateeModal').modal('show');
+                    $.getJSON("/membertype/list",{},function (releset) {
+                        var e=releset.data;
+                        var tt ="";
+                        var tttt="";
+                        var ttt="<option value='-1'>"+"--请选择--"+"</option>";
+                        $(e).each(function () {
+                            tt += "<option value='"+this.typeId+"'>"+""+this.typeName+"</option>";
+                            tttt=ttt+tt;
+                        });
+                        $('#upoptype').html(tttt);
+                        //回显下拉框
+                        $('#upoptype').val(data.memberTypes);
+                    }),
+
+                    $('#upname').val(data.memberName);
+                    $('#upphone').val(data.memberPhone);
+                    $('#upsex').val(data.memberSex);
+                    $('#upsrdata').val(data.birthday);
+                    $('#updata').val(data.nenberDate);
+                    $('#upage').val(data.memberAge);
+                    $('#upid').val(data.memberId);
+
+                } else {
+                    swal("温馨提示！", "服务器异常", "error");
+                }
+            });
+```
+
+6.3.2 后端分析
+
+```java
+    @GetMapping("queryById/{memberId}")
+    public DataResults queryById(@PathVariable("memberId") Integer memberId){
+        Member member = memberService.getById(memberId);
+        Integer types = member.getMemberTypes();
+        Membertype membertype = membertypeService.getById(types);
+        member.setMembertype(membertype);
+        return DataResults.success(ResultCode.SUCCESS,member);
+    }
+```
+
+## 7. vip学员会员到期模块
+
+```java
+    @GetMapping("queryPageExpire")
+    public Map<String,Object> queryPageExpire(String hyname, Integer ktype, Integer pageSize, Integer pageNumber){
+        Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> paramMap = new HashMap<>();
+
+        paramMap.put("hyname",hyname);
+        paramMap.put("ktype",ktype);
+        if(pageSize == null){
+            pageSize = 10;
+        }
+        if(pageNumber == null){
+            pageNumber = 1;
+        }
+        paramMap.put("pageStart",(pageNumber - 1) * pageSize);
+        paramMap.put("pageSize",pageSize);
+        paramMap.put("nowTime", DateTimeUtils.nowTime());
+
+        int totalCount = memberService.totalCount(paramMap);
+        List<Member> list = memberService.pageMembers(paramMap);
+        resultMap.put("total",totalCount);
+        resultMap.put("rows",list);
+        return resultMap;
+    }
+```
+
+```xml
+    <select id="pageMembers" resultMap="memberMap">
+        select * from member inner join membertype on member.memberTypes = memberType.typeId
+        where member.del = 0 and membertype.typeDel = 0
+        <if test="hyname != null and hyname !='' ">
+            and memberName like '%${hyname}%'
+        </if>
+
+        <if test="ktype != null and ktype !=0">
+            and memberTypes = #{ktype}
+        </if>
+        <if test="nowTime != null and nowTime != ''">
+            and memberxufei &lt; #{nowTime}
+        </if>
+        limit #{pageStart},#{pageSize}
+    </select>
+
+    <!--    int totalCount(Map<String, Object> paramMap);-->
+    <select id="totalCount" resultType="int">
+        select count(*) from member inner join membertype on member.memberTypes = memberType.typeId
+        where member.del = 0 and membertype.typeDel = 0
+        <if test="hyname != null and hyname !='' ">
+            and memberName like '%${hyname}%'
+        </if>
+
+        <if test="ktype != null and ktype !=0">
+            and memberTypes = #{ktype}
+        </if>
+        <if test="nowTime != null and nowTime != ''">
+            and memberxufei &lt; #{nowTime}
+        </if>
+```
+
+## 8. 续费管理模块
+
