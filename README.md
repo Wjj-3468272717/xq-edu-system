@@ -1634,7 +1634,7 @@ $.getJSON('/member/queryById/' + memberId, function (result) {
     }
 ```
 
-## 7. vip学员会员到期模块
+### 6.4 vip学员会员到期模块
 
 ```java
     @GetMapping("queryPageExpire")

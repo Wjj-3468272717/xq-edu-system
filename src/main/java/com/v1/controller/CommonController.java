@@ -1,6 +1,7 @@
 package com.v1.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -43,6 +44,16 @@ public class CommonController {
     @RequestMapping("memeber-expire.html")
     public String toMemberExpire(){
         return "memeber-expire";
+    }
+
+    @RequestMapping("member-charge.html")
+    public String toMemberCharge(){
+        return "member-charge";
+    }
+
+    @RequestMapping("member-charge-records.html")
+    public String toMemberChargeRecords(){
+        return "member-charge-records";
     }
 
 }
