@@ -66,4 +66,9 @@ public class CommonController {
         return "member-cardextend-records";
     }
 
+    @RequestMapping("coach.html")
+    public String toCoach(){
+        return "coach";
+    }
+
 }
