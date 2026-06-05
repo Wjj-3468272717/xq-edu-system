@@ -71,4 +71,9 @@ public class CommonController {
         return "coach";
     }
 
+    @RequestMapping("coach-subject.html")
+    public String toCoachSubject(){
+        return "coach-subject";
+    }
+
 }
