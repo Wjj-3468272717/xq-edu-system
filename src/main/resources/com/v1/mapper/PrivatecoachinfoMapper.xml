@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--命名空间-->
+<mapper namespace="com.v1.mapper.PrivatecoachinfoMapper">
+    <resultMap id="privatecoachinfoMap" type="com.v1.pojo.Privatecoachinfo">
+        <id column="pid" property="pid"/>
+        <result column="memberid" property="memberid"/>
+        <result column="coachid" property="coachid"/>
+        <result column="subjectid" property="subjectid"/>
+        <result column="count" property="count"/>
+        <result column="countprice" property="countprice"/>
+        <result column="date" property="date"/>
+        <result column="state" property="state"/>
+        <result column="remark" property="remark"/>
+        <result column="admin" property="admin"/>
+        <association property="member" javaType="com.v1.pojo.Member">
+            <id column="memberId" property="memberId"/>
+            <result column="memberName" property="memberName"/>
+            <result column="memberPhone" property="memberPhone"/>
+            <result column="memberSex" property="memberSex"/>
+            <result column="memberAge" property="memberAge"/>
+            <result column="memberTypes" property="memberTypes"/>
+            <result column="nenberDate" property="nenberDate"/>
+            <result column="birthday" property="birthday"/>
+            <result column="memberStatic" property="memberStatic"/>
+            <result column="memberbalance" property="memberbalance"/>
+            <result column="memberxufei" property="memberxufei"/>
+        </association>
+        <association property="coach" javaType="com.v1.pojo.Coach">
+            <id column="coachId" property="coachId"/>
+            <result column="coachName" property="coachName"/>
+        </association>
+        <association property="subject" javaType="com.v1.pojo.Subject">
+            <id column="subId" property="subId"/>
+            <result column="subname" property="subname"/>
+        </association>
+    </resultMap>
+
+    <!--    int totalCount(Map<String, Object> paramMap);-->
+    <select id="totalCount" resultType="integer">
+        select count(*)
+        from privatecoachinfo
+        inner join member on privatecoachinfo.memberid = member.memberId
+        inner join coach on privatecoachinfo.coachid = coach.coachId
+        inner join subject on privatecoachinfo.subjectid = subject.subId
+        where member.del = 0 and subject.del = 0 and coach.del = 0 and privatecoachinfo.del = 0
+        <if test="memberid!=null and memberid!=''">
+          AND member.memberId = #{memberid}
+        </if>
+        <if test="coachName!=null and coachName!=''">
+          AND coach.coachName LIKE '%${coachName}%'
+        </if>
+        <if test="subname!=null and subname!=''">
+          AND `subject`.subname LIKE '%${subname}%'
+        </if>
+    </select>
+    <!--    List<Privatecoachinfo> pages(Map<String, Object> paramMap);-->
+    <select id="pages" resultMap="privatecoachinfoMap">
+        select *
+        from privatecoachinfo
+        inner join member on privatecoachinfo.memberid = member.memberId
+        inner join coach on privatecoachinfo.coachid = coach.coachId
+        inner join subject on privatecoachinfo.subjectid = subject.subId
+        where member.del = 0 and subject.del = 0 and coach.del = 0 and privatecoachinfo.del = 0
+        <if test="memberid!=null and memberid!=''">
+            AND member.memberId = #{memberid}
+        </if>
+        <if test="coachName!=null and coachName!=''">
+            AND coach.coachName LIKE '%${coachName}%'
+        </if>
+        <if test="subname!=null and subname!=''">
+            AND `subject`.subname LIKE '%${subname}%'
+        </if>
+        limit #{pageStart},#{pageSize}
+    </select>
+</mapper>

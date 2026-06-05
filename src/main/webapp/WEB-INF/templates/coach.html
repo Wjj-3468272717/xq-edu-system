@@ -159,10 +159,8 @@
             var xz =$('#xz').val() ;
             $("#myModal").modal("hide") ;
             $.getJSON("/coach/coachNameExist",{"coachName":name},function (releset) {
-                $("#table").bootstrapTable('load',releset);
                 if(releset.data<1){
                     $.post('/coach/add',{'coachName':name,'coachPhone':phone,'coachSex':sex,'coachAge':age,'coachDate':date,"teach":jl,"coachWages":xz,'coachAddress':address},function(data){
-                        $("#table").bootstrapTable("load",data) ;
                         if(data.code==200){
                             swal("添加！", "添加新教师信息成功", "success");
                             search();
@@ -171,7 +169,7 @@
                         }
                         search();
                     }) ;
-                }else if(releset>0){
+                }else if(releset.data > 0){
                     swal("失败！", "已有该教师信息，请重新输入！", "error");
                     search();
                 }

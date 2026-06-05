@@ -78,9 +78,9 @@ public class CoachController {
     }
 
     @PutMapping("update")
-    public DataResults update(Coach coach){
+    public DataResults update(Coach coach) {
         boolean updated = coachService.updateById(coach);
-        if(updated){
+        if (updated) {
             return DataResults.success(ResultCode.SUCCESS);
         } else {
             return DataResults.fail(ResultCode.FAIL);
@@ -88,15 +88,22 @@ public class CoachController {
     }
 
     @DeleteMapping("delete/{id}")
-    public DataResults delete(@PathVariable("id") Integer id){
+    public DataResults delete(@PathVariable("id") Integer id) {
         Coach coach = coachService.getById(id);
         coach.setDel(1);
         boolean updated = coachService.updateById(coach);
-        if(updated){
+        if (updated) {
             return DataResults.success(ResultCode.SUCCESS);
         } else {
             return DataResults.fail(ResultCode.FAIL);
         }
+    }
+
+    @PutMapping("availableList")
+    public DataResults availableList() {
+        List<Coach> coachList = coachService.list(new
+                QueryWrapper<Coach>().eq("coachStatic", 0).eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS, coachList);
     }
 
 }
