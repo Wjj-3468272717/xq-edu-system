@@ -1695,5 +1695,344 @@ $.getJSON('/member/queryById/' + memberId, function (result) {
         </if>
 ```
 
-## 8. 续费管理模块
+## 7. 续费管理模块
+
+### 7.1 分页查询-续费列表
+
+#### 7.1.1 前端分析
+
+```js
+$.getJSON("/member-charge/queryPageCharge",{"pageSize":opt.pageSize,"pageNumber":opt.pageNumber,"hyname":hyid,"ktype":ktype},function (releset) {
+                $("#dg").bootstrapTable('load',releset) ;
+            })
+```
+
+#### 7.1.2 后端分析
+
+```java
+    @GetMapping("queryPageCharge")
+    public Map<String,Object> queryPageCharge(String hyname, Integer ktype, Integer pageNumber, Integer pageSize){
+        Map<String, Object> resultMap = new HashMap<>();
+        Map<String,Object> paramMap = new HashMap<>();
+
+        paramMap.put("hyname",hyname);
+        paramMap.put("ktype",ktype);
+        if(pageSize == null){
+            pageSize = 10;
+        }
+        if(pageNumber == null){
+            pageNumber = 1;
+        }
+        paramMap.put("pageStart",(pageNumber - 1) * pageSize);
+        paramMap.put("pageSize",pageSize);
+
+        int totalCount = memberService.totalCount(paramMap);
+        List<Member> list = memberService.pageMembers(paramMap);
+        resultMap.put("total",totalCount);
+        resultMap.put("rows",list);
+        return resultMap;
+    }
+```
+
+### 7.2 vip续费功能
+
+#### 7.2.1 前端分析
+
+```js
+$.post("/member-charge/charge",{"remark":bz,"memberId":id,"money":jine},function (releset) {
+                if(releset.code == 200){
+                    $("#dg").bootstrapTable('load',releset) ;
+                    //关闭
+                    $('#updateeModal').modal('hide');
+                    swal(
+                        {
+                            title:"充值成功",
+                            type:"success",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    );
+                    //查询
+                    search();
+                }else{
+                    swal(
+                        {
+                            title:"充值失败",
+                            type:"warning",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    )
+                }
+            })
+```
+
+#### 7.2.2 后端分析
+
+1. 更新账户余额信息
+2. 新增充值记录
+
+```java
+    @PostMapping("/charge")
+    public DataResults charge(Chargerecords chargerecords){
+        try {
+            chargerecords.setDel(0);
+            chargerecords.setChargetime(DateTimeUtils.nowTime());
+           memberChargeService.charge(chargerecords);
+            return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+```java
+    public void charge(Chargerecords chargerecords) {
+        //更新余额信息
+        Member member = memberService.getById(chargerecords.getMemberId());
+        member.setMemberbalance(member.getMemberbalance() + chargerecords.getMoney());
+        memberService.updateById(member);
+        //新增充值记录
+        chargerecords.setChargetime(DateTimeUtils.nowTime());
+        chargerecords.setDel(0);
+        chargerecordsService.save(chargerecords);
+    }
+```
+
+### 7.3 充值记录查询
+
+#### 7.3.1 前端分析
+
+```js
+$('#dg').bootstrapTable({
+                url:'/chargerecords/queryPage',
+                method:'get',
+                contentType:"application/x-www-form-urlencoded",
+                columns:[
+                    { field:'member.memberId',title:'会员编号'},
+                    { field:'member.memberName',title:'会员名称'},
+                    { field:'member.membertype.typeName',title:'会员类型'},
+                    { field:'money',title:'充值金额'},
+                    { field:'remark',title:'充值备注'},
+                    { field:'chargetime',title:'充值日期'}
+                ],
+                queryParamsType:'',
+                queryParams:queryParams,
+                height:360,
+                pageList:[5,10,15],
+                pageNumber:1,
+                pageSize:5,
+                pagination:true,
+                sidePagination:'server',
+            })
+```
+
+```js
+$.getJSON("/chargerecords/queryPage",{"pageSize":opt.pageSize,"pageNumber":opt.pageNumber,"xdate":xdate,"ddate":ddate},function (releset) {
+                $("#dg").bootstrapTable('load',releset) ;
+            })
+```
+
+#### 7.3.2 后端分析
+
+1.查询充值记录
+
+2.根据memberId和typeId查询会员信息和卡类型
+
+```java
+    @GetMapping("/queryPage")
+    public Map<String,Object> querypage(Integer pageNumber, Integer pageSize, String xdate, String ddate){
+        Map<String,Object> resultMap = new HashMap<>();
+
+        QueryWrapper<Chargerecords> q = new QueryWrapper<>();
+        q.ge(StringUtils.isNotEmpty(xdate),"chargetime",xdate);
+        q.le(StringUtils.isNotEmpty(ddate),"chargetime",ddate);
+        q.eq("del",0);
+
+        IPage<Chargerecords> page = chargerecordsService.page(new Page<Chargerecords>(pageNumber,pageSize),q);
+        List<Chargerecords> list = page.getRecords();
+        for(Chargerecords record : list){
+            Member member = memberService.getById(record.getMemberId());
+            Membertype membertype = membertypeService.getById(member.getMemberTypes());
+            member.setMembertype(membertype);
+            record.setMember(member);
+        }
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",list);
+        return resultMap;
+    }
+```
+
+## 8. 续卡管理模块
+
+### 8.1 续卡操作
+
+1. 根据会员id查询到会员信息
+2. 根据卡类型获取续费的天数和会员卡金额
+3. 修改会员信息
+4. 完成续卡操作并添加续卡记录
+
+```js
+$.getJSON("/member/queryById/"+id,{},function (releset) {
+                //到期时间
+                var memberxufei = releset.data.memberxufei;
+                //账户余额
+                var memberbalance = releset.data.memberbalance;
+                $.getJSON("/membertype/getDays/"+xztype,{},function (releset) {
+                    //续费天数
+                    var typetian=releset.data.typeDay;
+                    //会员卡金额
+                    var typemoney=releset.data.typemoney;
+                    if (typemoney>memberbalance){
+                        swal(
+                            {
+                                title:"余额不足！",
+                                type:"warning",
+                                timer: 1500,
+                                showConfirmButton: false
+                            }
+                        );
+                        return;
+                    }
+                    var date1 = new Date();
+                    var date2 = new Date(date1);
+
+                    var date3 = new Date(memberxufei);
+                    var date4 = new Date(memberxufei);
+
+                    if(date1.getTime()>= date3.getTime()){
+                        var qb=date2.setDate(date1.getDate() + typetian);
+                        var rq=date2.getFullYear() + "-" + (date2.getMonth() + 1) + "-" + date2.getDate();
+                    }else {
+                        var qb=date4.setDate(date3.getDate() + typetian);
+                        var rq=date4.getFullYear() + "-" + (date4.getMonth() + 1) + "-" + date4.getDate();
+                    }
+
+                    var bz=$('#bz').val();
+
+                    $.post("/cardsrecord/extendCard",{"remark":bz,"memberId":id,"typeId":xztype,"money":jine,"daoqi":rq},function (releset) {
+                        if(releset.code==200){
+                            $("#dg").bootstrapTable('load',releset) ;
+                            $('#updateeModal').modal('hide');
+                            swal(
+                                {
+                                    title:"续卡成功",
+                                    type:"success",
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }
+                            );
+                            search();
+                        }else{
+                            swal(
+                                {
+                                    title:"续卡失败",
+                                    type:"warning",
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }
+                            )
+                        }
+                    })
+                })
+            })
+```
+
+```java
+    @PostMapping("/extendCard")
+    public DataResults extendCard(Cardsrecord cardsrecord) {
+        try {
+            cardsrecord.setDel(0);
+            cardsrecord.setCreatetime(DateTimeUtils.nowTime());
+            cardsrecordService.extendCard(cardsrecord);
+            return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+```java
+    @Override
+    @Transactional
+    public void extendCard(Cardsrecord cardsrecord) {
+        //更新到期时间和余额信息和卡类型
+        Member member = memberService.getById(cardsrecord.getMemberId());
+        Integer typeId = cardsrecord.getTypeId();
+//        member.setMembertype(membertypeService.getById(typeId));
+        member.setMemberTypes(typeId);
+        member.setMemberStatic(1);
+        member.setMemberxufei(cardsrecord.getDaoqi());
+        member.setMemberbalance(member.getMemberbalance() - cardsrecord.getMoney());
+        memberService.updateById(member);
+        //添加续卡记录
+        cardsrecordService.save(cardsrecord);
+    }
+```
+
+### 8.2 续卡记录查询
+
+#### 8.2.1 前端分析
+
+```js
+$('#dg').bootstrapTable({
+                url:'/cardsrecord/queryPage',
+                method:'get',
+                contentType:"application/x-www-form-urlencoded",
+                columns:[
+                    { field:'member.memberId',title:'会员编号'},
+                    { field:'member.memberName',title:'会员名称'},
+                    { field:'member.membertype.typeName',title:'会员类型'},
+                    { field:'money',title:'续卡金额'},
+                    { field:'remark',title:'续卡备注'},
+                    { field:'daoqi',title:'到期时间'},
+                    { field:'createtime',title:'续卡日期'}
+                ],
+                queryParamsType:'',
+                queryParams:queryParams,
+                height:360,
+                pageList:[5,10,15],
+                pageNumber:1,
+                pageSize:5,
+                pagination:true,
+                sidePagination:'server',
+            })
+```
+
+```js
+$.getJSON("/cardsrecord/queryPage",{"pageSize":opt.pageSize,"pageNumber":opt.pageNumber,"xdate":xdate,"ddate":ddate},function (releset) {
+                $("#dg").bootstrapTable('load',releset) ;
+            })
+```
+
+#### 8.2.2 后端分析
+
+1. 获取续卡记录信息
+2. 根据续卡记录查询成员信息
+
+```java
+    @GetMapping("queryPage")
+    public Map<String, Object> queryPage(Integer pageSize, Integer pageNumber, String xdate, String ddate) {
+        Map<String, Object> resultMap = new HashMap<>();
+        QueryWrapper<Cardsrecord> q = new QueryWrapper<>();
+        q.ge(StringUtils.isNotEmpty(xdate),"createtime", xdate);
+        q.le(StringUtils.isNotEmpty(ddate),"createtime", ddate);
+        q.eq("del", 0);
+        IPage<Cardsrecord> page = cardsrecordService.page(new Page<Cardsrecord>(pageNumber, pageSize), q);
+        List<Cardsrecord> list = page.getRecords();
+        for(Cardsrecord cardsrecord : list){
+            Member member = memberService.getById(cardsrecord.getMemberId());
+            Membertype membertype = membertypeService.getById(cardsrecord.getTypeId());
+            member.setMembertype(membertype);
+
+            cardsrecord.setMember(member);
+        }
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",list);
+        return resultMap;
+    }
+```
+
+## 9. 教师管理模块
 
