@@ -33,7 +33,7 @@ public class CardsrecordServiceImpl extends ServiceImpl<CardsrecordMapper, Cards
     @Override
     @Transactional
     public void extendCard(Cardsrecord cardsrecord) {
-        //更新到期时间和余额信息
+        //更新到期时间和余额信息和卡类型
         Member member = memberService.getById(cardsrecord.getMemberId());
         Integer typeId = cardsrecord.getTypeId();
 //        member.setMembertype(membertypeService.getById(typeId));
