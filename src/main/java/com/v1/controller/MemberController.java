@@ -1,6 +1,7 @@
 package com.v1.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.v1.pojo.Member;
 import com.v1.pojo.Membertype;
 import com.v1.service.MemberService;
@@ -11,6 +12,7 @@ import com.v1.utils.ResultCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.xml.crypto.Data;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +34,16 @@ public class MemberController {
     MemberService memberService;
     @Autowired
     MembertypeService membertypeService;
+
+    @GetMapping("list")
+    public DataResults list(){
+        List<Member> list = memberService.list(new QueryWrapper<Member>().eq("del", 0));
+        for(Member member : list){
+            Membertype membertype = membertypeService.getById(member.getMemberTypes());
+            member.setMembertype(membertype);
+        }
+        return DataResults.success(ResultCode.SUCCESS,list);
+    }
 
     /**
      * 分页查询member
