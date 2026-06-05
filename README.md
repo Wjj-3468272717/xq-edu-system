@@ -2036,3 +2036,540 @@ $.getJSON("/cardsrecord/queryPage",{"pageSize":opt.pageSize,"pageNumber":opt.pag
 
 ## 9. 教师管理模块
 
+### 9.1 分页查询-教师信息
+
+#### 9.1.1 前端分析
+
+```js
+$.getJSON("/coach/queryPage",{"pageSize":opt.pageSize,"pageNumber":opt.pageNumber,"coachName":coachid},function (releset) {
+                $("#table").bootstrapTable('load',releset) ;
+            })
+```
+
+#### 9.1.2 后端分析
+
+```java
+    @GetMapping("queryPage")
+    public Map<String, Object> queryPage(Integer pageSize, Integer pageNumber, String coachName) {
+        Map<String, Object> resultMap = new HashMap<>();
+        QueryWrapper<Coach> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like(StringUtils.isNotEmpty(coachName), "coachName", coachName);
+        queryWrapper.eq("del",0);
+        IPage<Coach> page = coachService.page(new Page<Coach>(pageNumber, pageSize), queryWrapper);
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",page.getRecords());
+        return resultMap;
+    }
+```
+
+### 9.2 新增-教师信息
+
+#### 9.2.1 前端分析
+
+```js
+$.getJSON("/coach/coachNameExist",{"coachName":name},function (releset) {
+                $("#table").bootstrapTable('load',releset);
+                if(releset.data<1){
+                    $.post('/coach/add',{'coachName':name,'coachPhone':phone,'coachSex':sex,'coachAge':age,'coachDate':date,"teach":jl,"coachWages":xz,'coachAddress':address},function(data){
+                        $("#table").bootstrapTable("load",data) ;
+                        if(data.code==200){
+                            swal("添加！", "添加新教师信息成功", "success");
+                            search();
+                        }else{
+                            swal("添加！", "添加新教师信息失败！", "error");
+                        }
+                        search();
+                    }) ;
+                }else if(releset>0){
+                    swal("失败！", "已有该教师信息，请重新输入！", "error");
+                    search();
+                }
+            })
+```
+
+#### 9.2.2 后端分析
+
+```java
+    @GetMapping("coachNameExist")
+    public DataResults coachNameExist(String coachName) {
+        //select count(*) from coach where coachNam = ? and del = 0
+        int count = coachService.count(new QueryWrapper<Coach>().eq("coachName", coachName).eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS, count);
+    }
+
+    @PostMapping("add")
+    public DataResults add(Coach coach) {
+        coach.setDel(0);
+        boolean saved = coachService.save(coach);
+        if (saved) {
+            return DataResults.success(ResultCode.SUCCESS);
+        } else {
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 9.3 删除-教师信息
+
+#### 9.3.1 前端分析
+
+```js
+$.post('/coach/delete/'+id,{"_method":"delete"},function(result){
+                            //重新给table绑定数据
+                            //$("#table").bootstrapTable("load",data) ;
+                            if(result.code==200){
+                                swal("删除！", "删除成功","success");
+                                search();
+                            }else{
+                                swal("删除！", "删除异常)", "error");
+                            }
+                        }) ;
+                    } else {
+                        swal("取消！", "您已取消删除)", "error");
+                    }
+```
+
+#### 9.3.2 后端分析
+
+```java
+    @DeleteMapping("delete/{id}")
+    public DataResults delete(@PathVariable("id") Integer id){
+        Coach coach = coachService.getById(id);
+        coach.setDel(1);
+        boolean updated = coachService.updateById(coach);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        } else {
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+```
+
+### 9.4 回显-教师信息
+
+#### 9.4.1 前端分析
+
+```js
+function upd1(id){
+            $("#myModal2").modal("show");
+            $('#id').val(id);
+            $.getJSON('/coach/queryById/'+id,{},function(result){
+                var data=result.data;
+                $("#table").bootstrapTable("load",data) ;
+                $("#xgname").val(data.coachName);
+                $("#xgage").val(data.coachAge);
+                $("#xgphone").val(data.coachPhone);
+                $("#xgaddress").val(data.coachAddress);
+                $('#xgdate').val(data.coachDate);
+                $('#xgstatic').val(data.coachStatic);
+                $('#xgjl').val(data.teach);
+                $('#xgxz').val(data.coachWages);
+                $('#xgsex').val(data.coachSex);
+                // $("input[name=xgsex][value="+data.coachSex+"]").attr("checked",true);
+            }) ;
+        }
+```
+
+#### 9.4.2  后端分析
+
+```java
+    @GetMapping("queryById/{id}")
+    public DataResults queryById(@PathVariable("id") Integer id) {
+        Coach coach = coachService.getById(id);
+        if (coach != null) {
+            return DataResults.success(ResultCode.SUCCESS, coach);
+        } else {
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+```
+
+### 9.5 更新-教师信息
+
+#### 9.5.1 前端分析
+
+```js
+$.post('/coach/update',{'_method':'put','coachId':id,'coachName':name,'coachPhone':phone,'coachSex':sex,'coachAge':age,'coachDate':date,"teach":jl,"coachWages":xz,'coachAddress':address,'coachStatic':xgstatic},function(data){
+                $("#table").bootstrapTable("load",data) ;
+                if(data.code==200){
+                    swal("更新！", "更新教师信息成功", "success");
+                    search();
+                }else{
+                    swal("更新！", "更新教师信息失败！", "error");
+                }
+            }) ;
+```
+
+#### 9.5.2 后端分析
+
+```java
+    @PutMapping("update")
+    public DataResults update(Coach coach){
+        boolean updated = coachService.updateById(coach);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        } else {
+            return DataResults.fail(ResultCode.FAIL);
+        }
+    }
+```
+
+### 9.6 查询-学员课程
+
+#### 9.6.1学员下拉框展示
+
+```js
+$('#tb').bootstrapTable({
+                url: '/member/list',
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                columns: [{
+                    radio: true
+                }, {
+                    field: 'memberId',
+                    title: '编号'
+                }, {
+                    field: 'memberName',
+                    title: 'vip学员名称'
+                }, {
+                    field: 'membertype.typeName',
+                    title: 'vip学员类型'
+                }
+                ],
+                queryParamsType: '',
+                queryParams: queryParams,
+                height: 360,
+                pagination: true,
+                onDblClickRow: function (row) {
+                    $('#myModal3').modal("hide");
+                    id = row.memberId;
+                    $.getJSON("/member/queryById/" + id, {}, function (e) {
+                        $('#memberid').val(e.data.memberId);
+                    })
+                }
+            })
+```
+
+```java
+    @GetMapping("list")
+    public DataResults list(){
+        List<Member> list = memberService.list(new QueryWrapper<Member>().eq("del", 0));
+        for(Member member : list){
+            Membertype membertype = membertypeService.getById(member.getMemberTypes());
+            member.setMembertype(membertype);
+        }
+        return DataResults.success(ResultCode.SUCCESS,list);
+    }
+```
+
+#### 9.6.2 分页查询
+
+```js
+$.getJSON("/privatecoachinfo/queryPage", {
+                "pageSize": opt.pageSize,
+                "pageNumber": 1,
+                "coachName": coachName,
+                "subname": subname,
+                "memberid": memberid
+            }, function (releset) {
+                $("#table").bootstrapTable('load', releset);
+            })
+```
+
+```java
+    @GetMapping("/queryPage")
+    public Map<String,Object> queryPage(Integer pageNumber, Integer pageSize, String coachName, String memberid, String subname){
+        Map<String,Object> resultMap = new HashMap<>();
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("pageStart",(pageNumber - 1) * pageSize);
+        paramMap.put("pageSize",pageSize);
+        paramMap.put("coachName",coachName);
+        paramMap.put("memberid",memberid);
+        paramMap.put("subname",subname);
+
+        int total =  privatecoachinfoService.totalCount(paramMap);
+        List<Privatecoachinfo> rows = privatecoachinfoService.queryPage(paramMap);
+        resultMap.put("total",total);
+        resultMap.put("rows",rows);
+        return resultMap;
+    }
+```
+
+```xml
+ <resultMap id="privatecoachinfoMap" type="com.v1.pojo.Privatecoachinfo">
+        <id column="pid" property="pid"/>
+        <result column="memberid" property="memberid"/>
+        <result column="coachid" property="coachid"/>
+        <result column="subjectid" property="subjectid"/>
+        <result column="count" property="count"/>
+        <result column="countprice" property="countprice"/>
+        <result column="date" property="date"/>
+        <result column="state" property="state"/>
+        <result column="remark" property="remark"/>
+        <result column="admin" property="admin"/>
+        <association property="member" javaType="com.v1.pojo.Member">
+            <id column="memberId" property="memberId"/>
+            <result column="memberName" property="memberName"/>
+            <result column="memberPhone" property="memberPhone"/>
+            <result column="memberSex" property="memberSex"/>
+            <result column="memberAge" property="memberAge"/>
+            <result column="memberTypes" property="memberTypes"/>
+            <result column="nenberDate" property="nenberDate"/>
+            <result column="birthday" property="birthday"/>
+            <result column="memberStatic" property="memberStatic"/>
+            <result column="memberbalance" property="memberbalance"/>
+            <result column="memberxufei" property="memberxufei"/>
+        </association>
+        <association property="coach" javaType="com.v1.pojo.Coach">
+            <id column="coachId" property="coachId"/>
+            <result column="coachName" property="coachName"/>
+        </association>
+        <association property="subject" javaType="com.v1.pojo.Subject">
+            <id column="subId" property="subId"/>
+            <result column="subname" property="subname"/>
+        </association>
+    </resultMap>
+    
+     <!--    int totalCount(Map<String, Object> paramMap);-->
+    <select id="totalCount" resultType="integer">
+        select count(*)
+        from privatecoachinfo
+        inner join member on privatecoachinfo.memberid = member.memberId
+        inner join coach on privatecoachinfo.coachid = coach.coachId
+        inner join subject on privatecoachinfo.subjectid = subject.subId
+        where member.del = 0 and subject.del = 0 and coach.del = 0 and privatecoachinfo.del = 0
+        <if test="memberid!=null and subname!=''">
+          AND member.memberId = #{memberid}
+        </if>
+        <if test="coachName!=null and coachName!=''">
+          AND coach.coachName LIKE '%${coachName}%'
+        </if>
+        <if test="subname!=null and subname!=''">
+          AND `subject`.subname LIKE '%${subname}%'
+        </if>
+    </select>
+    <!--    List<Privatecoachinfo> pages(Map<String, Object> paramMap);-->
+    <select id="pages" resultMap="privatecoachinfoMap">
+        select *
+        from privatecoachinfo
+        inner join member on privatecoachinfo.memberid = member.memberId
+        inner join coach on privatecoachinfo.coachid = coach.coachId
+        inner join subject on privatecoachinfo.subjectid = subject.subId
+        where member.del = 0 and subject.del = 0 and coach.del = 0 and privatecoachinfo.del = 0
+        <if test="memberid!=null and subname!=''">
+            AND member.memberId = #{memberid}
+        </if>
+        <if test="coachName!=null and coachName!=''">
+            AND coach.coachName LIKE '%${coachName}%'
+        </if>
+        <if test="subname!=null and subname!=''">
+            AND `subject`.subname LIKE '%${subname}%'
+        </if>
+        limit #{pageStart},#{pageSize}
+    </select>
+```
+
+#### 9.6.3 查看学员详情
+
+```js
+aa.bootstrapTable({
+    url: '/privatecoachinfo/getDetailsById/' + idd,
+    method: 'get',
+    columns: [{
+        field: 'pid',
+        title: '编号',
+    },
+        {
+            field: 'member.memberName',
+            title: 'vip学员名称'
+        },
+        {
+            field: 'count',
+            title: '数量'
+        }, {
+            field: 'state',
+            title: '状态',
+            formatter: function (value, row, index) {
+                if (row.state == 1) {
+                    return "购买";
+                } else {
+                    return "赠送";
+                }
+            }
+        }, {
+            field: 'countprice',
+            title: '金额',
+        },
+        {
+            field: 'remark',
+            title: '备注',
+
+        }, {
+            field: 'date',
+            title: '开始日期',
+        }
+    ]
+});
+```
+
+```java
+@GetMapping("getDetailsById/{idd}")
+    public List<Privatecoachinfo> getDetailsById(@PathVariable("idd") Integer idd){
+        Privatecoachinfo privatecoachinfo = privatecoachinfoService.getById(idd);
+        Member member = memberService.getById(privatecoachinfo.getMemberid());
+        Coach coach = coachService.getById(privatecoachinfo.getCoachid());
+        Subject subject = subjectService.getById(privatecoachinfo.getSubjectid());
+        privatecoachinfo.setMember(member);
+        privatecoachinfo.setCoach(coach);
+        privatecoachinfo.setSubject(subject);
+        List<Privatecoachinfo> list = new ArrayList<>();
+        list.add(privatecoachinfo);
+        return list;
+    }
+```
+
+### 9.7 添加-学员课程
+
+#### 9.7.1 查询私教次数
+
+```js
+$.getJSON("/member/queryById/" + id, {}, function (result) {
+                        var e = result.data;
+
+                        //查询私教次数
+                        $.getJSON("/privatecoachinfo/count", {'memid': id}, function (e) {
+                            $('#cishu').text(e.data);
+                        });
+
+                        $('#kh').val(e.memberId);
+                        $('#xm').text(e.memberName);
+                        $('#type').text(e.membertype.typeName);
+                        $('#dqdate').text(e.memberxufei);
+                        $('#hystatic').text(e.memberStatic);
+
+                        if (e.memberStatic == 1) {
+                            $('#hystatic').text("正常");
+                        } else {
+                            $('#hystatic').text("请续费");
+                        }
+                    })
+```
+
+```java
+    @GetMapping("count")
+    public DataResults count(Integer meid){
+        int count = privatecoachinfoService.count(new QueryWrapper<Privatecoachinfo>().eq("del",0).eq("memberid",meid));
+        return DataResults.success(ResultCode.SUCCESS,count);
+    }
+```
+
+#### 9.7.2  新增-学员课程
+
+```js
+ $.post('/privatecoachinfo/add', {
+                                'memberid': hyid,
+                                'coachid': jlid,
+                                'subjectid': kcid,
+                                'count': count,
+                                'countprice': countprice,
+                                'date': date,
+                                'state': state,
+                                "remark": remark
+                            }, function (result) {
+                                $("#table").bootstrapTable("load", result);
+                                if (result.code == 200) {
+                                    swal("添加！", "添加会员课程成功", "success");
+                                    search();
+                                } else {
+                                    swal("失败！", "添加会员课程异常", "error");
+                                    search();
+                                }
+                            });
+```
+
+```java
+    @PostMapping("add")
+    public DataResults add(Privatecoachinfo privatecoachinfo) {
+        privatecoachinfo.setDel(0);
+        //TODO: 后期设置为系统登录用户
+        privatecoachinfo.setAdmin("匿名");
+        privatecoachinfoService.baoke(privatecoachinfo);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
+```
+
+#### 9.7.3 变更-课程教师
+
+```js
+ $.getJSON("/coach/availableList", {}, function (releset) {
+                    var e = releset.data;
+                    var tt = "";
+                    var tttt = "";
+                    var ttt = "<option value='-1'>" + "--请选择--" + "</option>";
+                    $(e).each(function () {
+                        if (this.coachId != coachId) {
+                            tt += "<option value='" + this.coachId + "'>" + "❤" + this.coachName + "</option>";
+                            tttt = ttt + tt;
+                        }
+                    });
+                    $('#xgcoach').html(tttt);
+                })
+```
+
+```js
+ $.post('/privatecoachinfo/update', {'_method': 'put', 'pid': id, 'coachid': coachname}, function (result) {
+                if(result.code==200){
+                    $("#table").bootstrapTable("load", result);
+                    swal("修改！", "修改成功", "success");
+                    search();
+                }else{
+                    swal("修改！", "修改失败", "error");
+                    search();
+                }
+            });
+```
+
+```java
+    @GetMapping("availableList")
+    public DataResults availableList() {
+        List<Coach> coachList = coachService.list(new
+                QueryWrapper<Coach>().eq("coachStatic", 0).eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS, coachList);
+    }
+```
+
+```java
+    @PutMapping("update")
+    public DataResults update(Privatecoachinfo privatecoachinfo) {
+        privatecoachinfo.setAdmin("匿名");
+        privatecoachinfoService.updateById(privatecoachinfo);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
+```
+
+#### 9.7.4  生成-学员课程
+
+```java
+$.post('/privatecoachinfo/delete/'+id, {
+                            '_method': 'delete'
+                        }, function (result) {
+                            if(result.code==200){
+                                //重新给table绑定数据
+                                $("#table").bootstrapTable("load", result);
+                                swal("删除！", "删除成功", "success");
+                                search();
+                            }else{
+                                //重新给table绑定数据
+                                $("#table").bootstrapTable("load", result);
+                                swal("删除！", "删除异常", "success");
+                                search();
+                            }
+                        });
+```
+
+```
+/** * 删除 * @return */
+@DeleteMapping("delete/{id}") public DataResults delete(@PathVariable("id") Integer id){ Privatecoachinfo privatecoachinfo=new Privatecoachinfo(id,1); privatecoachinfoService.updateById(privatecoachinfo); return DataResults.success(ResultCode.SUCCESS);
+}
+```
+
