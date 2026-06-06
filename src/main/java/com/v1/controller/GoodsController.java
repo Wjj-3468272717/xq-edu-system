@@ -7,8 +7,11 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.v1.pojo.Goods;
 import com.v1.service.GoodsService;
+import com.v1.utils.DataResults;
+import com.v1.utils.ResultCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +47,23 @@ public class GoodsController {
         resultMap.put("total",pageTotal);
         resultMap.put("rows",rows);
         return resultMap;
+    }
+
+    @GetMapping("goodsNameExist")
+    public DataResults goodsNameExist(String goodsName){
+        int count = goodsService.count(new QueryWrapper<Goods>().eq("goodsName", goodsName).eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS,count);
+    }
+
+    @PostMapping("add")
+    public DataResults add(Goods goods){
+        goods.setDel(0);
+        boolean saved = goodsService.save(goods);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
     }
 
 }
