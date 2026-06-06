@@ -10,11 +10,7 @@ import com.v1.service.GoodsService;
 import com.v1.utils.DataResults;
 import com.v1.utils.ResultCode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +55,22 @@ public class GoodsController {
     public DataResults add(Goods goods){
         goods.setDel(0);
         boolean saved = goodsService.save(goods);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+
+    @GetMapping("queryById/{id}")
+    public DataResults queryById(@PathVariable("id") Integer id){
+        Goods goods = goodsService.getById(id);
+        return DataResults.success(ResultCode.SUCCESS,goods);
+    }
+
+    @PutMapping("update")
+    public DataResults update(Goods goods){
+        boolean saved = goodsService.updateById(goods);
         if(saved){
             return DataResults.success(ResultCode.SUCCESS);
         }else{
