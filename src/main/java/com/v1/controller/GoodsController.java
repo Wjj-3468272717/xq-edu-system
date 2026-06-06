@@ -70,8 +70,19 @@ public class GoodsController {
 
     @PutMapping("update")
     public DataResults update(Goods goods){
-        boolean saved = goodsService.updateById(goods);
-        if(saved){
+        boolean updated = goodsService.updateById(goods);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+
+    @DeleteMapping("delete/{id}")
+    public DataResults delete(@PathVariable("id") Integer id){
+        Goods goods = new Goods(id,0);
+        boolean updated = goodsService.updateById(goods);
+        if(updated){
             return DataResults.success(ResultCode.SUCCESS);
         }else{
             return DataResults.success(ResultCode.FAIL);
