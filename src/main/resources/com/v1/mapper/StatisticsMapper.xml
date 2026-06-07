@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--命名空间-->
+<mapper namespace="com.v1.mapper.StatisticsMapper">
+
+    <!--    int sumMoneyByDate(String date);-->
+    <select id="sumMoneyByDate" resultType="int">
+        select IFNULL(sum(a.money), 0)
+        from chargerecords as a
+        where chargetime like ('%${date}%')
+    </select>
+
+    <!--    int sumKpiByCoach(@Param("year") String year,@Param("coachId") Integer coachId);-->
+    <select id="sumKpiByCoach" resultType="int">
+        select IFNULL(sum(countprice), 0)
+        from privatecoachinfo
+        where coachid = #{coachId} and date like ('%${year}%')
+    </select>
+
+</mapper>
