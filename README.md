@@ -2567,9 +2567,283 @@ $.post('/privatecoachinfo/delete/'+id, {
                         });
 ```
 
-```
-/** * 删除 * @return */
-@DeleteMapping("delete/{id}") public DataResults delete(@PathVariable("id") Integer id){ Privatecoachinfo privatecoachinfo=new Privatecoachinfo(id,1); privatecoachinfoService.updateById(privatecoachinfo); return DataResults.success(ResultCode.SUCCESS);
-}
+```java
+    @DeleteMapping("delete/{id}")
+    public DataResults delete(@PathVariable("id") Integer id) {
+        Privatecoachinfo privatecoachinfo = new Privatecoachinfo(id, 1);
+        privatecoachinfoService.updateById(privatecoachinfo);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
 ```
 
+## 10. 商品管理模块
+
+### 10.1 分页查询-商品列表
+
+```js
+$.getJSON("/goods/queryPage",{"pageSize":opt.pageSize,"pageNumber":1,"goodsName":goodsid},function (releset) {
+                $("#table").bootstrapTable('load',releset) ;
+            })
+```
+
+```java
+    @GetMapping("queryPage")
+    public Map<String,Object> queryPage(Integer pageNumber, Integer pageSize, String goodsName){
+        Map<String,Object> resultMap = new HashMap<>();
+        QueryWrapper<Goods> q = new QueryWrapper<>();
+        q.like(StringUtils.isNotEmpty(goodsName),"goodsName",goodsName);
+        q.eq("del",0);
+        IPage<Goods> page = goodsService.page(new Page<Goods>(pageNumber, pageSize), q);
+        long pageTotal = page.getTotal();
+        List<Goods> rows = page.getRecords();
+        resultMap.put("total",pageTotal);
+        resultMap.put("rows",rows);
+        return resultMap;
+    }
+```
+
+### 10.2 新增-商品信息
+
+```js
+$.getJSON("/goods/goodsNameExist",{"goodsName":name},function (releset) {
+                //$("#table").bootstrapTable('load',releset) ;
+                if(releset.data<1){
+                    $.post('/goods/add',{'goodsName':name,'unit':unit,'unitPrice':unitprice,'sellPrice':sellprice,'inventory':count,"remark":remark},function(res){
+                        //alert(res);  // {"code":403,"msg":"??????"}
+                        //res=JSON.parse(res);
+                        if(res.code==200){
+                            //重新给table绑定数据
+                            //$("#table").bootstrapTable("load",res.data) ;
+                            swal("新增！", "新增成功！", "success");
+                        }else if(res.code==403){
+                            swal("新增！", "没有权限访问！", "error");
+                        }else{
+                            swal("新增！", "新增异常！", "error");
+                        }
+                        search();
+                    },"json") ;
+                }else if(releset>0){
+                    swal("失败！", "已有该商品，请重新输入！", "error");
+                    search();
+                }
+```
+
+```java
+    @GetMapping("goodsNameExist")
+    public DataResults goodsNameExist(String goodsName){
+        int count = goodsService.count(new QueryWrapper<Goods>().eq("goodsName", goodsName).eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS,count);
+    }
+
+    @PostMapping("add")
+    public DataResults add(Goods goods){
+        goods.setDel(0);
+        boolean saved = goodsService.save(goods);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 10.3 进货和退货-商品
+
+```js
+$.getJSON('/goods/queryById/'+id,{},function(res){
+                var data=res.data;
+                $("#table").bootstrapTable("load",data) ;
+                $("#xgname").val(data.goodsName);
+                $("#xgcount").val(data.inventory);
+            }) ;
+```
+
+```js
+ $.post('/goods/update',{'_method':'put','goodsId':id,"inventory":ss},function(res){
+                if(res.code==200){
+                    swal("进货！", "进货成功！", "success");
+                }else{
+                    swal("进货！", "进货异常！", "error");
+                }
+                search();
+            }) ;
+```
+
+### 10.4 修改和删除-商品信息
+
+修改商品信息和进退货逻辑相同
+
+```js
+$.post('/goods/update',{'_method':'put','goodsId':id,'goodsName':name,"unit":unit,"unitPrice":unitprice,"sellPrice":sellprice,"inventory":count,"remark":remark},function(res){
+                if(res.code==200){
+                    //重新给table绑定数据
+                    //$("#table").bootstrapTable("load",res.data) ;
+                    swal("更新！", "更新成功！", "success");
+                }else{
+                    swal("更新！", "更新异常！", "error");
+                }
+                search();
+            }) ;
+```
+
+```js
+ $.post('/goods/delete/'+id,{'_method':'delete'},function(res){
+                            if(res.code==200){
+                                //重新给table绑定数据
+                                //$("#table").bootstrapTable("load",res.data) ;
+                                swal("删除！", "删除成功！", "success");
+                            }else{
+                                swal("删除！", "删除异常！", "error");
+                            }
+                            search();
+                        }) ;
+```
+
+### 10.5 销售商品功能实现
+
+```js
+$.getJSON("/goodinfo/queryPage", {
+                "pageSize": opt.pageSize,
+                "pageNumber": opt.pageNumber,
+                "goodsid": goodsid,
+                "memberid": memberid
+            }, function (releset) {
+                $("#table").bootstrapTable('load', releset);
+            });
+```
+
+```java
+@GetMapping("queryPage")
+    public Map<String,Object> queryPage(Integer pageSize, Integer pageNumber, Integer goodsid, Integer memberid){
+        Map<String,Object> resultMap = new HashMap<>();
+        QueryWrapper q = new QueryWrapper<>();
+        q.eq(goodsid != null,"goodsid",goodsid);
+        q.eq(memberid != null,"memberid",memberid);
+        q.eq("del",0);
+        IPage<Goodinfo> page = goodinfoService.page(new Page<Goodinfo>(pageNumber, pageSize), q);
+        long pageTotal = page.getTotal();
+        List<Goodinfo> records = page.getRecords();
+        for(Goodinfo goodinfo : records){
+            goodinfo.setMember(memberService.getById(goodinfo.getMemberid()));
+            goodinfo.setGoods(goodsService.getById(goodinfo.getGoodsid()));
+        }
+        resultMap.put("total",pageTotal);
+        resultMap.put("rows",records);
+        return resultMap;
+    }
+```
+
+### 10.6 添加-销售记录
+
+```js
+$.post('/goodinfo/add', {
+    'memberid': hyid,
+    'goodsid': spid,
+    'count': count,
+    'price': j,
+    'remark': remark
+}, function (res) {
+    //$("#table").bootstrapTable("load",data) ;
+    if (res.code == 200) {
+        swal("添加！", "添加消费记录成功！", "success");
+        search();
+    } else {
+        swal("失败！", "添加消费记录异常！", "error");
+        search();
+    }
+});
+```
+
+```java
+ @PostMapping("add")
+    public DataResults add(Goodinfo goodinfo){
+        goodinfo.setDel(0);
+        goodinfo.setCreatetime(DateTimeUtils.nowTime());
+        goodinfoService.sell(goodinfo);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
+```
+
+```java
+    @Override
+    @Transactional
+    public void sell(Goodinfo goodinfo) {
+        //1. 扣库存
+        Goods goods = goodsService.getById(goodinfo.getMemberid());
+        goods.setInventory(goods.getInventory() - goodinfo.getCount());
+        goodsService.updateById(goods);
+        //2. 捡余额
+        Member member = memberService.getById(goodinfo.getMemberid());
+        member.setMemberbalance(member.getMemberbalance() - goodinfo.getPrice());
+        memberService.updateById(member);
+        //3. 增记录
+        goodinfoMapper.insert(goodinfo);
+    }
+```
+
+### 10.7 删除-销售记录
+
+#### 10.7.1 删除指定记录
+
+```js
+$.post('/goodinfo/delete/' + id, {'_method': 'delete'}, function (res) {
+                            if (res.code == 200) {
+                                //重新给table绑定数据
+                                swal("删除！", "删除成功！", "success");
+                            } else {
+                                swal("删除！", "删除异常！", "success");
+                            }
+                            search();
+                        });
+```
+
+```java
+    @DeleteMapping("delete/{id}")
+    public DataResults delete(@PathVariable("id") Integer id){
+        Goodinfo goodinfo = new Goodinfo(id,1);
+        boolean updated = goodinfoService.updateById(goodinfo);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+#### 10.7.2 批量删除指定记录
+
+```js
+$.ajax({
+                                url: "/goodinfo/dellist",
+                                type: "post",
+                                dataType: "json",
+                                traditional: true,//加上这个属性，后台用 String[] arr 就可以接收到了
+                                data: {
+                                    "array": array.toString(),
+                                    "_method": 'delete'
+                                },
+                                success: function (res) {
+                                    if (res.code == 200) {
+                                        //重新给table绑定数据
+                                        swal("删除！", "批量删除成功！", "success");
+                                    } else {
+                                        swal("删除！", "批量删除异常！", "success");
+                                    }
+                                    search();
+                                }
+                            });
+```
+
+```java
+@DeleteMapping("dellist")
+    public DataResults dellist(String array){
+        log.info("传递的数据是："+array);
+        String[] ids = array.split(",");
+        List<Goodinfo> list = goodinfoService.list();
+        for(String id : ids){
+            list.add(new Goodinfo(Integer.parseInt(id),1));
+        }
+        goodinfoService.updateBatchById(list);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
+```
