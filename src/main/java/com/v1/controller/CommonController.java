@@ -81,4 +81,9 @@ public class CommonController {
         return "goods-list";
     }
 
+    @RequestMapping("goods-sales.html")
+    public String toGoodsSales(){
+        return "goods-sales";
+    }
+
 }
