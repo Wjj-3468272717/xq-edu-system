@@ -31,6 +31,12 @@ public class GoodsController {
     @Autowired
     GoodsService goodsService;
 
+    @GetMapping("list")
+    public DataResults list(){
+        List<Goods> list = goodsService.list(new QueryWrapper<Goods>().eq("del", 0));
+        return DataResults.success(ResultCode.SUCCESS,list);
+    }
+
     @GetMapping("queryPage")
     public Map<String,Object> queryPage(Integer pageNumber, Integer pageSize, String goodsName){
         Map<String,Object> resultMap = new HashMap<>();
