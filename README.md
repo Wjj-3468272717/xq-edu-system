@@ -2847,3 +2847,118 @@ $.ajax({
         return DataResults.success(ResultCode.SUCCESS);
     }
 ```
+
+## 11. 物品遗失模块
+
+### 11.1 分页查询-物品信息
+
+```js
+$.getJSON("/loos/queryPage",{"pageSize":opt.pageSize,"pageNumber":opt.pageNumber,"loosName":loosId},function (releset) {
+                $("#table").bootstrapTable('load',releset) ;
+            })
+```
+
+```java
+    @GetMapping("queryPage")
+    public Map<String,Object> queryPage(Integer pageSize, Integer pageNumber,String loosName){
+        Map<String,Object> resultMap = new HashMap<>();
+        QueryWrapper<Loos> q = new QueryWrapper<>();
+        q.eq("del",0);
+        q.like(StringUtils.isNotEmpty(loosName),"looseName",loosName);
+        IPage<Loos> page = loosService.page(new Page<Loos>(pageNumber, pageSize), q);
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",page.getRecords());
+        return resultMap;
+    }
+```
+
+### 11.2 添加-遗失物品
+
+```js
+$.post('/loos/add',{'loosName':name,"loosImages":img,'loosAddress':address,'loosjdate':time,"loosStatus":state,'scavenger':jname,'scavengerPhone':jphone},function(res){
+                if(res.code==200){
+                    swal("添加！", "添加成功",
+                        "success");
+                    search();
+                }else{
+                    swal("添加！", "添加异常",
+                        "error");
+                    search();
+                }
+            }) ;
+```
+
+```java
+ @PostMapping("add")
+    public DataResults add(Loos loos){
+        loos.setDel(0);
+        //TODO:
+        loos.setAdmin("匿名");
+        boolean saved = loosService.save(loos);
+        if(saved){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 11.3 查看与取回-遗失物品
+
+#### 11.3.1查看详情
+
+```js
+$.getJSON('/loos/queryById/'+id,{},function(res) {
+                var data=res.data;
+                $("#table").bootstrapTable("load", data);
+                $("#swmc").val(data.loosName);
+                $("#srxm").val(data.scavenger);
+                $("#srdh").val(data.scavengerPhone);
+                $("#swdd").val(data.loosAddress);
+                $("#dsxm").val(data.receiveName);
+                $("#dsdh").val(data.receivePhone);
+                $("#jtime").val(data.loosjdate);
+                $("#qtime").val(data.loosldate);
+
+            });
+```
+
+```java
+    @GetMapping("queryById/{id}")
+    public DataResults queryById(@PathVariable("id") Integer id){
+        Loos loos = loosService.getById(id);
+        return DataResults.success(ResultCode.SUCCESS,loos);
+    }
+```
+
+#### 11.3.2 取回遗失物品
+
+```js
+ $.post('/loos/update',{'_method':'put','loosId':id,"loosStatus":state,"receiveName":dname,'receivePhone':dphone,'loosldate':nahui},function(res){
+                if(res.code==200){
+                    swal("取回！", "取回成功",
+                        "success");
+                    search();
+                }else{
+                    swal("取回！", "取回异常",
+                        "error");
+                    search();
+                }
+            }) ;
+```
+
+```java
+    @PutMapping("update")
+    public DataResults update(Loos loos){
+        loos.setDel(0);
+        //TODO: 后期获取登录用户
+        loos.setAdmin("匿名");
+        boolean update = loosService.updateById(loos);
+        if(update){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
