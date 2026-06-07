@@ -2962,3 +2962,114 @@ $.getJSON('/loos/queryById/'+id,{},function(res) {
     }
 ```
 
+## 12. 统计分析模块
+
+### 12.1 年份收入统计
+
+```js
+$.getJSON('/statistics/tongji', {"year": year}, function (data) {
+                //重新给table绑定数据
+                myChart.setOption({
+                    xAxis: {
+                        data: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+                    },
+                    series: [{
+                        // 根据名字对应到相应的系列
+                        data: data
+                    }]
+                });
+            });
+```
+
+```java
+    @GetMapping("tongji")
+    public int[] tongji(Integer year){
+        String[] array = {year + "-01",year + "-02",year + "-03",year + "-04",year + "-05",year + "-06",year + "-07",year + "-08",year + "-09",year + "-10",year + "-11",year + "-12"};
+        int[] intar = new int[12];
+        for(int i = 0; i < 12; i++){
+            intar[i] = statisticsService.sumMoneryByDate(array[i]);
+        }
+        return intar;
+    }
+```
+
+```java
+    <!--    int sumMoneyByDate(String date);-->
+    <select id="sumMoneyByDate" resultType="int">
+        select IFNULL(sum(a.money), 0)
+        from chargerecords as a
+        where chargetime like ('%${date}%')
+    </select>
+```
+
+### 12.2 教师KPI统计
+
+```js
+$.ajax({
+                type: "get",
+                url: "/statistics/coachKpi",
+                data: {"year": year},
+                dataType: "json",
+                success: function (res) {
+                    let indicator = [];
+                    let data = [];
+                    let kpiData = [];
+                    for (let key in res) {
+                        indicator.push({name: key, max: 20000});
+                        kpiData.push(res[key]);
+                    }
+                    data.push({value: kpiData, name: 'KPI'}); // 添加 name 属性
+                    option.radar.indicator = indicator;
+                    option.series[0].data = data;
+                    myChart.setOption(option);
+                }
+            });
+```
+
+```java
+    @GetMapping("coachKpi")
+    public Map<String,Object> coachKpi(String year){
+        Map<String,Object> resultMap = new HashMap<>();
+        List<Coach> list = coachService.list();
+        for(Coach coach : list){
+            int kpi = statisticsService.sumKpiByCoach(year,coach.getCoachId());
+            resultMap.put(coach.getCoachName(),kpi);
+        }
+        return resultMap;
+    }
+```
+
+```java
+    <!--    int sumKpiByCoach(@Param("year") String year,@Param("coachId") Integer coachId);-->
+    <select id="sumKpiByCoach" resultType="int">
+        select IFNULL(sum(countprice), 0)
+        from privatecoachinfo
+        where coachid = #{coachId} and date like ('%${year}%')
+    </select>
+```
+
+### 12.3 数量统计
+
+```js
+$.getJSON('/statistics/counts', function (data) {
+        countsChart.setOption({
+            xAxis: {
+                data: ['会员数', '教师数', '课程数']
+            },
+            series: [{
+                data: [data.memberCount, data.coachCount, data.subjectCount]
+            }]
+        });
+```
+
+```java
+    @GetMapping("counts")
+    public Map<String,Integer> counts(){
+        Map<String,Integer> resultMap = new HashMap<>();
+        resultMap.put("memberCount",memberService.count());
+        resultMap.put("coachCount",coachService.count());
+        resultMap.put("subjectCount",subjectService.count());
+        return resultMap;
+    }
+```
+
