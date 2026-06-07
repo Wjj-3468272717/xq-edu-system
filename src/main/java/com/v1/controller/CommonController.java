@@ -86,4 +86,9 @@ public class CommonController {
         return "goods-sales";
     }
 
+    @RequestMapping("loos.html")
+    public String toLoos(){
+        return "loos";
+    }
+
 }
