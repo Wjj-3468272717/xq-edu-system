@@ -1,18 +1,26 @@
 package com.v1.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.v1.pojo.Adminuser;
 import com.v1.service.AdminuserService;
 import com.v1.utils.DataResults;
 import com.v1.utils.ResultCode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -55,6 +63,18 @@ public class AdminuserController {
         }else{//原密码错误
             return DataResults.success(ResultCode.PASSWORD_ERROR);
         }
+    }
+
+    @GetMapping("queryPage")
+    public Map<String,Object> queryPage(Integer pageSize, Integer pageNumber, String adminName){
+        Map<String,Object> resultMap = new HashMap<>();
+        QueryWrapper<Adminuser> q = new QueryWrapper<>();
+        q.like(StringUtils.isNotEmpty(adminName),"adminName",adminName);
+        q.eq("del",0);
+        IPage<Adminuser> page = adminuserService.page(new Page<Adminuser>(pageNumber, pageSize), q);
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",page.getRecords());
+        return resultMap;
     }
 
 }
