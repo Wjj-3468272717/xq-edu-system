@@ -3446,3 +3446,21 @@ $.post("/logout",function (res) {
     }
 ```
 
+## 14. 用户管理模块
+
+### 14.1 用户信息查询
+
+```java
+    @GetMapping("queryPage")
+    public Map<String,Object> queryPage(Integer pageSize, Integer pageNumber, String adminName){
+        Map<String,Object> resultMap = new HashMap<>();
+        QueryWrapper<Adminuser> q = new QueryWrapper<>();
+        q.like(StringUtils.isNotEmpty(adminName),"adminName",adminName);
+        q.eq("del",0);
+        IPage<Adminuser> page = adminuserService.page(new Page<Adminuser>(pageNumber, pageSize), q);
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",page.getRecords());
+        return resultMap;
+    }
+```
+
