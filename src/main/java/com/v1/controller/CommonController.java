@@ -107,4 +107,9 @@ public class CommonController {
         return "updpassword";
     }
 
+    @RequestMapping("adminusers.html")
+    public String toUsersPage(){
+        return "adminusers";
+    }
+
 }
