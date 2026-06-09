@@ -92,9 +92,19 @@ public class CommonController {
         return "loos";
     }
 
-    @GetMapping("statistics.html")
+    @RequestMapping("statistics.html")
     public String toStatistics(){
         return "statistics";
+    }
+
+    @RequestMapping("login.html")
+    public String toLogin(){
+        return "login";
+    }
+
+    @RequestMapping("updpassword.html")
+    public String toUpdPassword(){
+        return "updpassword";
     }
 
 }

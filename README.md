@@ -3073,3 +3073,376 @@ $.getJSON('/statistics/counts', function (data) {
     }
 ```
 
+## 13. 配置SpringSecurity
+
+### 13.1 引入Security过滤器
+
+```xml
+    <filter>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/security
+       http://www.springframework.org/schema/security/spring-security.xsd">
+
+<!--    定义静态资源不拦截-->
+    <security:http pattern="/static/**" security="none"/>
+    <security:http pattern="/favicon.ico" security="none"/>
+
+<!--    配置过滤规则-->
+    <security:http auto-config="true" use-expressions="true">
+        <security:intercept-url pattern="/login.html" access="permitAll()"/>
+        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN','ROLE_USER')"/>
+
+        <!--    配置自定义登录页面-->
+        <security:form-login login-page="/login.html"
+                             login-processing-url="/login"
+                             authentication-success-forward-url="/index.html"
+        />
+
+<!--        允许访问oframe框架里面嵌套的页面，默认不允许访问-->
+        <security:headers>
+            <security:frame-options policy="SAMEORIGIN"/>
+        </security:headers>
+
+<!--        关闭csrf过滤器-->
+        <security:csrf disabled="true"/>
+    </security:http>
+
+<!--    配置认证管理器-->
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="adminuserService"/>
+    </security:authentication-manager>
+
+</beans>
+```
+
+### 13.2 同步认证
+
+```java
+ @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("页面上输入的用户名： "+username);
+        Adminuser adminuser = adminuserMapper.selectOne(new QueryWrapper<Adminuser>().eq("adminName", username));
+        if(adminuser == null){
+            throw new UsernameNotFoundException("用户信息不存在");
+        }else{
+            List<GrantedAuthority> list = new ArrayList<>();
+            list.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            return new User(adminuser.getAdminName(),"{noop}"+adminuser.getAdminPassword(),list);
+        }
+    }
+```
+
+### 13.3 异步认证
+
+```js
+//基于ajax发送异步认证请求
+    function userLogin(){
+        var username = $("[name='username']").val();
+        var password = $("[name='password']").val();
+
+        $.post("/login",{"username":username,"password":password},function (res) {
+            if(res.code == 200){
+                location.href = "/index.html";
+            }else{
+                if(res.code == 9002){
+                    $("#error").text(res.msg);
+                }else{
+                    if(res.code == 9001){
+                        $("#error").text(res.msg);
+                    }else{
+                        $("#error").text("登录异常!");
+                    }
+                }
+            }
+        },"json")
+    }
+```
+
+```xml
+ <security:form-login login-page="/login.html"
+                             login-processing-url="/login"
+                             authentication-success-handler-ref="authenticationSuccessHandle"
+                             authentication-failure-handler-ref="authenticationFailureHandler"/>
+```
+
+```java
+@Component(value = "authenticationSuccessHandle")
+@Slf4j
+public class AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    @Autowired
+    AdminuserService adminuserService;
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        response.setContentType("application/json;charset=utf-8");
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        log.info("登录成功的用户是:"+userDetails.getUsername());
+        DataResults<String> results = DataResults.success(ResultCode.SUCCESS);
+        response.getWriter().write(new Gson().toJson(results));
+    }
+}
+```
+
+```java
+@Component(value = "authenticationFailureHandler")
+@Slf4j
+public class AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
+
+    @Override
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+        response.setContentType("application/json;charset=utf-8");
+        log.info("登录失败:"+exception.getMessage()+"登录异常的类型是："+exception);
+        DataResults<String> results = DataResults.success(ResultCode.LOGIN_FAIL);
+        response.getWriter().write(new Gson().toJson(results));
+    }
+}
+```
+
+### 13.4 使用验证码完成认证
+
+```html
+    <form class="layui-form"><span style="color: red;" id="error"></span>
+        <input name="username" placeholder="用户名" type="text" layverify="required" class="layui-input">
+        <hr class="hr15">
+        <input name="password" lay-verify="required" placeholder="密码" type="password" class="layui-input">
+        <hr class="hr15">
+        <div>
+            <input name="syscode" placeholder="验证码" type="text" style="width: 150px;float: left;" lay-verify="required" class="layui-input"/>
+            <img src="/createSystemCode" id="systemCode" onclick="changeCode();" style="float: left;cursor: pointer;"/></span>
+        </div>
+        <input value="登录" lay-submit lay-filter="login" style="width:100%;" type="button" onclick="userLogin();"/>
+        <hr class="hr20">
+    </form>
+```
+
+```js
+    //基于ajax发送异步认证请求
+    function userLogin() {
+        var username = $("[name='username']").val();
+        var password = $("[name='password']").val();
+        var syscode = $("[name='syscode']").val();
+
+        $.post("/login", {"username": username, "password": password,"syscode":syscode}, function (res) {
+            if (res.code == 200) {
+                location.href = "/index.html";
+            } else {
+                if (res.code == 9002) {
+                    $("#error").text(res.msg);
+                } else {
+                    if (res.code == 9001) {
+                        $("#error").text(res.msg);
+                    } else {
+                        $("#error").text("登录异常!");
+                    }
+                }
+            }
+        }, "json")
+    }    
+	function changeCode(){
+        $("#systemCode").prop("src","/createSystemCode?date=" + new Date())
+    }
+```
+
+```java
+    @RequestMapping("createSystemCode")
+    public void createSystemCode(HttpServletRequest req, HttpServletResponse res) throws Exception {
+       /* int width = 120;
+        int height = 50;
+        //创建一个画布对象
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics g = bi.getGraphics();
+        g.setColor(Color.GRAY);
+        g.fillRect(0, 0, width, height);
+        //获取随机生成的4位数字和字母组成的字符串
+        String code = getCheckCode();
+        req.getSession().setAttribute("systemCode", code);
+        g.setColor(Color.BLUE);
+        g.setFont(new Font("微软雅黑", Font.BOLD, 24));
+        g.drawString(code, 15, 25);
+        ImageIO.write(bi, "jpg", res.getOutputStream());*/
+        ServletOutputStream outputStream = res.getOutputStream();
+        String syscode = CheckCodeUtil.outputVerifyImage(100, 50, outputStream, 4);
+        req.getSession().setAttribute("systemCode",syscode);
+    }
+```
+
+### 13.5  自定义过滤器
+
+```java
+@Component(value = "systemCodeCheckFilter")
+public class SystemCodeCheckFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if(StringUtils.equals("/login",request.getRequestURI()) && StringUtils.equalsIgnoreCase(request.getMethod(),"post")){
+            String systemCode = (String) request.getSession().getAttribute("systemCode");
+            String sysCode = request.getParameter("syscode");
+            if(systemCode.equalsIgnoreCase(sysCode)){
+                filterChain.doFilter(request,response);
+            }else{
+                response.setContentType("application/json;charset=utf-8");
+                DataResults results = DataResults.success(ResultCode.CODE_FAIL);
+                response.getWriter().write(new Gson().toJson(results));
+            }
+        }else{
+            filterChain.doFilter(request,response);
+        }
+    }
+}
+```
+
+```xml
+<!--        配置自定义过滤器-->
+        <security:custom-filter ref="systemCodeCheckFilter" before="FORM_LOGIN_FILTER"/>
+```
+
+### 13.6 获取认证用户信息
+
+```java
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        response.setContentType("application/json;charset=utf-8");
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        log.info("登录成功的用户是:"+userDetails.getUsername());
+        //存储用户认证成功的用户东西
+        Adminuser adminuser = adminuserService.getOne(new QueryWrapper<Adminuser>().eq("adminName", userDetails.getUsername()));
+        request.getSession().setAttribute("loginUser",adminuser);
+        DataResults<String> results = DataResults.success(ResultCode.SUCCESS);
+        response.getWriter().write(new Gson().toJson(results));
+    }
+```
+
+```java
+<a href="javascript:;">欢迎您，<span th:text="${session.loginUser.adminName}"></span></a>
+```
+
+### 13.7  用户异步注销
+
+```html
+<dd><a href="javascript:logout();">退出</a></dd>
+```
+
+```js
+$.post("/logout",function (res) {
+                        if(res.code==250){
+                            location.href="/login.html";
+                        }else{
+                            alert("注销异常！");
+                        }
+                    },"json");
+```
+
+```java
+    //注销成功
+    @Override
+    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        response.setContentType("application/json;charset=utf-8");
+        DataResults results = DataResults.success(ResultCode.LOGOUT_SUCCESS);
+        response.getWriter().write(new Gson().toJson(results));
+    }
+```
+
+```xml
+<!--        配置注销-->
+        <security:logout logout-url="/logout"
+                         success-handler-ref="userLogoutSuccessHandler"
+                         delete-cookies="true"
+                         invalidate-session="true"
+        />
+```
+
+### 13.8 加密认证
+
+```xml
+<!--    配置认证管理器-->
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="adminuserService">
+            <!--   引入加密组件     -->
+            <security:password-encoder ref="passwordEncoder"/>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+<!--    配置加密的bean-->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+```
+
+### 13.9  修改密码
+
+```js
+//更新密码
+    function updatePwd() {
+        var oldPassword = $("[name='oldPassword']").val();
+        var newPassword = $("[name='newPassword']").val();
+        var newPasswordAgain = $("[name='newPasswordAgain']").val();
+        $.post("/adminuser/updatePwd", {
+            "oldPassword": oldPassword,
+            "newPassword": newPassword,
+            "newPasswordAgain": newPasswordAgain
+        }, function (result) {
+            if (result.code == 200) {
+                swal({
+                        title: "修改密码",
+                        text: "密码修改成功,重新登录！",
+                        type: "success",
+                        showCancelButton: true,
+                        confirmButtonColor: "#DD6B55",
+                        confirmButtonText: "确定",
+                        closeOnConfirm: false,
+                        closeOnCancel: false
+                    },
+                    function (isConfirm) {
+                        if (isConfirm) {
+                            parent.location.href = "/login.html";
+                        }
+                    });
+            } else {
+                $("#error").text(result.msg);
+            }
+        }, "json");
+    }
+```
+
+```java
+ @PostMapping("updatePwd")
+    public DataResults updatepwd(String oldPassword, String newPassword, String newPasswordAgain, HttpSession session){
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        //从session中获取用户信息
+        Adminuser user = (Adminuser)session.getAttribute("loginUser");
+        boolean matches = bCryptPasswordEncoder.matches(oldPassword, user.getAdminPassword());
+        //原密码是否正确
+        if(matches){
+            //新密码和旧密码不相同
+            if(!oldPassword.equals(newPassword)){
+                //两次密码相同
+                if(newPassword.equals(newPasswordAgain)){
+                    user.setAdminPassword(bCryptPasswordEncoder.encode(newPassword));
+                    adminuserService.updateById(user);
+                    //session失效
+                    session.invalidate();
+                    return DataResults.success(ResultCode.SUCCESS);
+                }else{//两次密码不相同
+                    return DataResults.success(ResultCode.REPASSWORD_ERROR);
+                }
+            }else{//新旧密码相同
+                return DataResults.success(ResultCode.SAME_PASSWORD);
+            }
+        }else{//原密码错误
+            return DataResults.success(ResultCode.PASSWORD_ERROR);
+        }
+    }
+```
+
