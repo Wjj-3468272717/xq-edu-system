@@ -112,4 +112,9 @@ public class CommonController {
         return "adminusers";
     }
 
+    @RequestMapping("adminroles.html")
+    public String toAdminRoles(){
+        return "adminroles";
+    }
+
 }

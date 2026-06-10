@@ -13,4 +13,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface AdminroleService extends IService<Adminrole> {
 
+    void addRole(Adminrole adminrole, String menusIds);
+
+    void updateRole(Adminrole adminrole, String menusIds);
+
+    boolean delRole(Adminrole adminrole);
 }
