@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--命名空间-->
+<mapper namespace="com.v1.mapper.AdminmenusMapper">
+
+<!--    List<Adminmenus> listMenusByAdminId(Integer adminId);-->
+    <select id="listMenusByAdminId" resultType="com.v1.pojo.Adminmenus">
+        select distinct adminmenus.*
+        from adminuser
+        inner join admin_user_role on adminuser.adminId = admin_user_role.adminId
+        inner join adminrole on admin_user_role.roleId = adminrole.id
+        inner join admin_role_menus on adminrole.id = admin_role_menus.roleId
+        inner join adminmenus on admin_role_menus.menuId = adminmenus.id
+        where adminuser.del = 0 and adminrole.del = 0 and adminmenus.del = 0
+        and adminuser.adminId = #{adminId} and adminmenus.type = 0;
+    </select>
+</mapper>

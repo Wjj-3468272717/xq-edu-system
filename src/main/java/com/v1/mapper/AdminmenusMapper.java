@@ -3,6 +3,8 @@ package com.v1.mapper;
 import com.v1.pojo.Adminmenus;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -13,4 +15,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface AdminmenusMapper extends BaseMapper<Adminmenus> {
 
+    List<Adminmenus> listMenusByAdminId(Integer adminId);
 }

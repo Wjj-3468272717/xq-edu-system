@@ -1,7 +1,4 @@
-<script src="/static/jquery-3.2.1.min.js">
-    window.onunload(alert("jin7"))
-</script>
-<html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>基于SSM框架开发的教务管理系统</title>
@@ -42,7 +39,7 @@
     </ul>
     <ul class="layui-nav right" lay-filter="">
         <li class="layui-nav-item">
-            <a href="javascript:;">欢迎您，<span th:text="${session.loginUser.adminName}"></span></a>
+            <a href="javascript:;">欢迎您，<span th:text="${session.loginUser.adminName}">XXX</span>【<span th:each="role:${session.adminroleList}" th:text="|${role.roleName}&nbsp;|">xx</span>】</a>
             <dl class="layui-nav-child"> <!-- 二级菜单 -->
                 <dd><a onclick="x_admin_show('修改密码','/updpassword.html','800','600')">修改密码</a></dd>
                 <dd><a href="javascript:logout();">退出</a></dd>
@@ -87,204 +84,21 @@
 <div class="left-nav">
     <div id="side-nav">
         <ul id="nav">
-            <li>
+            <li th:each="p:${session.adminmenusList}" th:if="${p.parentId==0}">
                 <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>学员管理</cite>
+                    <i class="iconfont" th:utext="${p.iocn}">XXXX</i>
+                    <cite th:text="${p.title}">XXXXX</cite>
                     <i class="iconfont nav_right">&#xe697;</i>
                 </a>
                 <ul class="sub-menu">
-                    <li>
-                        <a _href = "/member.html">
+                    <li th:each="s:${session.adminmenusList}" th:if="${s.parentId==p.id}">
+                        <a th:_href="${s.url}">
                             <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员列表</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="/memeber-expire.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员到期</cite>
+                            <cite th:text="${s.title}">xxxx</cite>
                         </a>
                     </li >
                 </ul>
             </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>续费管理</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="/member-card.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员续卡管理</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="/member-cardextend-records.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员续卡记录</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="/member-charge.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员余额充值</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="/member-charge-records.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员充值记录</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="/member-type.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员卡类型管理</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>教师管理</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="coach.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>教师列表</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="coach-subject.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>vip学员课程</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>课程管理</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="/subject.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>课程列表</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>教学用具管理</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="/equipment.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>教学用具信息</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>物品遗失</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="loos.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>物品归还</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>商品管理</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="goods-list.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>商品列表</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="goods-sales.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>商品售卖</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>信息统计</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="statistics.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>收入统计</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
-            <li>
-                <a href="javascript:;">
-                    <i class="iconfont" >&#xe723;</i>
-                    <cite>系统管理</cite>
-                    <i class="iconfont nav_right">&#xe697;</i>
-                </a>
-                <ul class="sub-menu">
-                    <li>
-                        <a _href="adminusers.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>用户管理</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a _href="adminroles.html">
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>角色管理</cite>
-                        </a>
-                    </li >
-                    <li>
-                        <a>
-                            <i class="iconfont">&#xe6a7;</i>
-                            <cite>日志管理</cite>
-                        </a>
-                    </li >
-                </ul>
-            </li>
-
         </ul>
     </div>
 </div>
@@ -314,6 +128,5 @@
     </div>
 </div>
 <!-- 底部结束 -->
-
 </body>
 </html>
