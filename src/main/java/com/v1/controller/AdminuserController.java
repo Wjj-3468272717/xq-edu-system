@@ -8,23 +8,24 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.v1.pojo.Adminuser;
 import com.v1.service.AdminuserService;
 import com.v1.utils.DataResults;
+import com.v1.utils.DateTimeUtils;
 import com.v1.utils.ResultCode;
+import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import javax.xml.stream.events.DTD;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * <p>
- *  前端控制器
+ * 前端控制器
  * </p>
  *
  * @author v1
@@ -38,43 +39,85 @@ public class AdminuserController {
     AdminuserService adminuserService;
 
     @PostMapping("updatePwd")
-    public DataResults updatepwd(String oldPassword, String newPassword, String newPasswordAgain, HttpSession session){
+    public DataResults updatepwd(String oldPassword, String newPassword, String newPasswordAgain, HttpSession session) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         //从session中获取用户信息
-        Adminuser user = (Adminuser)session.getAttribute("loginUser");
+        Adminuser user = (Adminuser) session.getAttribute("loginUser");
         boolean matches = bCryptPasswordEncoder.matches(oldPassword, user.getAdminPassword());
         //原密码是否正确
-        if(matches){
+        if (matches) {
             //新密码和旧密码不相同
-            if(!oldPassword.equals(newPassword)){
+            if (!oldPassword.equals(newPassword)) {
                 //两次密码相同
-                if(newPassword.equals(newPasswordAgain)){
+                if (newPassword.equals(newPasswordAgain)) {
                     user.setAdminPassword(bCryptPasswordEncoder.encode(newPassword));
                     adminuserService.updateById(user);
                     //session失效
                     session.invalidate();
                     return DataResults.success(ResultCode.SUCCESS);
-                }else{//两次密码不相同
+                } else {//两次密码不相同
                     return DataResults.success(ResultCode.REPASSWORD_ERROR);
                 }
-            }else{//新旧密码相同
+            } else {//新旧密码相同
                 return DataResults.success(ResultCode.SAME_PASSWORD);
             }
-        }else{//原密码错误
+        } else {//原密码错误
             return DataResults.success(ResultCode.PASSWORD_ERROR);
         }
     }
 
     @GetMapping("queryPage")
-    public Map<String,Object> queryPage(Integer pageSize, Integer pageNumber, String adminName){
-        Map<String,Object> resultMap = new HashMap<>();
+    public Map<String, Object> queryPage(Integer pageSize, Integer pageNumber, String adminName) {
+        Map<String, Object> resultMap = new HashMap<>();
         QueryWrapper<Adminuser> q = new QueryWrapper<>();
-        q.like(StringUtils.isNotEmpty(adminName),"adminName",adminName);
-        q.eq("del",0);
+        q.like(StringUtils.isNotEmpty(adminName), "adminName", adminName);
+        q.eq("del", 0);
         IPage<Adminuser> page = adminuserService.page(new Page<Adminuser>(pageNumber, pageSize), q);
-        resultMap.put("total",page.getTotal());
-        resultMap.put("rows",page.getRecords());
+        resultMap.put("total", page.getTotal());
+        resultMap.put("rows", page.getRecords());
         return resultMap;
+    }
+
+    @PostMapping("add")
+    public DataResults add(Adminuser adminuser,String roleIds) {
+        try {
+            adminuser.setDel(0);
+            adminuser.setCreateTime(DateTimeUtils.nowTime());
+            //添加用户信息
+            adminuserService.add(adminuser,roleIds);
+        return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+
+    @GetMapping("queryById/{adminId}")
+    public DataResults queryById(@PathVariable("adminId") Integer adminId){
+        Adminuser adminuser = adminuserService.getById(adminId);
+        return DataResults.success(ResultCode.SUCCESS,adminuser);
+    }
+
+    @PutMapping("update")
+    public DataResults update(Adminuser adminuser,String roleIds){
+        try {
+            adminuserService.updateAdminUser(adminuser,roleIds);
+            return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+
+    @DeleteMapping("delete/{adminId}")
+    public DataResults delete(@PathVariable("adminId") Integer adminId){
+        Adminuser adminuser = new Adminuser(adminId,1);
+        boolean updated = adminuserService.updateById(adminuser);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
     }
 
 }

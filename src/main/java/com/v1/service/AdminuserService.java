@@ -21,4 +21,7 @@ import org.springframework.stereotype.Service;
 public interface AdminuserService extends IService<Adminuser>{
 
 
+    void add(Adminuser adminuser, String roleIds);
+
+    void updateAdminUser(Adminuser adminuser, String roleIds);
 }

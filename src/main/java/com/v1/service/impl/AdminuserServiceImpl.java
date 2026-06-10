@@ -1,8 +1,12 @@
 package com.v1.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.v1.pojo.AdminUserRole;
+import com.v1.pojo.Adminrole;
 import com.v1.pojo.Adminuser;
 import com.v1.mapper.AdminuserMapper;
+import com.v1.service.AdminUserRoleService;
+import com.v1.service.AdminroleService;
 import com.v1.service.AdminuserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +17,9 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +38,10 @@ public class AdminuserServiceImpl extends ServiceImpl<AdminuserMapper, Adminuser
 
     @Autowired
     AdminuserMapper adminuserMapper;
+    @Autowired
+    AdminUserRoleService adminUserRoleService;
+    @Autowired
+    AdminroleService adminroleService;
 
 
     @Override
@@ -47,4 +57,36 @@ public class AdminuserServiceImpl extends ServiceImpl<AdminuserMapper, Adminuser
         }
     }
 
+    @Override
+    @Transactional
+    public void add(Adminuser adminuser, String roleIds) {
+        String encode = new BCryptPasswordEncoder().encode(adminuser.getAdminPassword());
+        adminuser.setAdminPassword(encode);
+        //新增用户表
+        adminuserMapper.insert(adminuser);
+        //新增关系表
+        String[] split = roleIds.split(",");
+        List<AdminUserRole> adminUserRoleList = new ArrayList<>();
+        for(String roleId : split){
+            AdminUserRole adminUserRole = new AdminUserRole(null,adminuser.getAdminId(),Integer.valueOf(roleId));
+            adminUserRoleList.add(adminUserRole);
+        }
+        adminUserRoleService.saveBatch(adminUserRoleList);
+    }
+
+    @Override
+    @Transactional
+    public void updateAdminUser(Adminuser adminuser, String roleIds) {
+        //更新用户表
+        adminuserMapper.updateById(adminuser);
+        // 更新关联关系表
+        adminUserRoleService.remove(new QueryWrapper<AdminUserRole>().eq("adminId",adminuser.getAdminId()));
+        String[] split = roleIds.split(",");
+        List<AdminUserRole> list = new ArrayList<>();
+        for(String roleId : split){
+            AdminUserRole adminUserRole = new AdminUserRole(null, adminuser.getAdminId(), Integer.valueOf(roleId));
+            list.add(adminUserRole);
+        }
+        adminUserRoleService.saveBatch(list);
+    }
 }

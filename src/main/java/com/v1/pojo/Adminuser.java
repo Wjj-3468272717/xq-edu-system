@@ -52,7 +52,7 @@ public class Adminuser implements Serializable {
 
     private Integer del;
 
-    private Adminuser(Integer adminId, Integer del){
+    public Adminuser(Integer adminId, Integer del){
         this.del = del;
         this.adminId = adminId;
     }
