@@ -51,9 +51,19 @@ public class AdminuserServiceImpl extends ServiceImpl<AdminuserMapper, Adminuser
         if(adminuser == null){
             throw new UsernameNotFoundException("用户信息不存在");
         }else{
-            List<GrantedAuthority> list = new ArrayList<>();
-            list.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            return new User(adminuser.getAdminName(),adminuser.getAdminPassword().trim(),list);
+//            List<GrantedAuthority> list = new ArrayList<>();
+//            list.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            //动态获取用户的角色信息
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            //获取用户的编号
+            Integer adminId = adminuser.getAdminId();
+            List<AdminUserRole> userRoles = adminUserRoleService.list(new QueryWrapper<AdminUserRole>().eq("adminId", adminId));
+            for(AdminUserRole userRole : userRoles){
+                Adminrole adminrole = adminroleService.getById(userRole.getRoleId());
+                String roleName = adminrole.getRoleName();
+                authorities.add(new SimpleGrantedAuthority("ROLE_"+roleName));
+            }
+            return new User(adminuser.getAdminName(),adminuser.getAdminPassword().trim(),authorities);
         }
     }
 

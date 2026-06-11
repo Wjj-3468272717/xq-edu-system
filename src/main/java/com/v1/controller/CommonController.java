@@ -117,4 +117,9 @@ public class CommonController {
         return "adminroles";
     }
 
+    @GetMapping("/403.html")
+    public String to403(){
+        return "403";
+    }
+
 }
