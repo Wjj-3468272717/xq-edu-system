@@ -86,7 +86,7 @@ public class CommonController {
 
     //    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
 //    @Secured(value ={"ROLE_管理员","ROLE_教师"})
-    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
+    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')")
     @RequestMapping("goods-list.html")
     public String toGoodsList(){
         return "goods-list";

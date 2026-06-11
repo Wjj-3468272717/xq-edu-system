@@ -52,11 +52,16 @@ public class AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccess
         Integer adminId = adminuser.getAdminId();
         List<AdminUserRole> roleList = adminUserRoleService.list(new QueryWrapper<AdminUserRole>().eq("adminId", adminId));
         List<Adminrole> adminroleList = new ArrayList<>();
+        boolean isAdmin = false;
         for(AdminUserRole userRole : roleList){
             Adminrole adminrole = adminroleService.getById(userRole.getRoleId());
             adminroleList.add(adminrole);
+            if(adminrole.getRoleName().equals("管理员")){
+                isAdmin = true;
+            }
         }
         request.getSession().setAttribute("adminroleList",adminroleList);
+        request.getSession().setAttribute("isAdmin",isAdmin);
         //查询登录用户的菜单权限
         List<Adminmenus>  adminmenuList = adminmenusService.listMenusByAdminId(adminId);
         request.getSession().setAttribute("adminmenusList",adminmenuList);
