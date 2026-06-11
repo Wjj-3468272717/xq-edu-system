@@ -1,7 +1,7 @@
 <script src="/static/jquery-3.2.1.min.js">
     window.onunload(alert("jin9"));
 </script>
-<html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity">
 <head>
     <title>物品遗失</title>
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.css" />
@@ -272,7 +272,7 @@
                 <input id="cardid" type="text" class="form-control">
             </div>
             <button onclick="search()" type="button" class="btn btn-default" style="margin-top: 20px" >查询</button>
-            <button type="button" class="btn btn-default" onclick="loos()" style="float: right; margin-top: 20px" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-plus"></span>添加拾取物详情</button>
+            <button sec:authorize="hasAnyRole('ROLE_管理员','ROLE_教师')" type="button" class="btn btn-default" onclick="loos()" style="float: right; margin-top: 20px" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-plus"></span>添加拾取物详情</button>
         </form>
     </div>
 

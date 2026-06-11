@@ -3464,3 +3464,721 @@ $.post("/logout",function (res) {
     }
 ```
 
+### 14.2 新增用户信息
+
+```js
+ //异步加载新增的时候的角色列表
+            $.getJSON("/adminrole/list", {}, function (releset) {
+                var e = releset.data;
+                $(e).each(function () {
+                    $('#adminRoles_add').append("<input type='checkbox' name='roleNames_add' value='" + this.id + "'/>" + this.roleName + "&nbsp;&nbsp;");
+                })
+            });
+```
+
+```java
+    @GetMapping("/list")
+    public DataResults list(){
+    List<Adminrole> list = adminroleService.list(new QueryWrapper<Adminrole>().eq("del",0));
+        return DataResults.success(ResultCode.SUCCESS,list);
+    }
+```
+
+```java
+$.post("/adminuser/add", {
+                "adminName": adminName,
+                "adminPassword": adminPassword,
+                "phone": phone,
+                "gender": gender,
+                "birthday": birthday,
+                "idcard": idcard,
+                "roleIds": roleIds.toString()
+            }, function (releset) {
+                if (releset.code == 200) {
+                    $("#dg").bootstrapTable('load', releset);
+                    $('#exampleModal').modal('hide');
+                    swal(
+                        {
+                            title: "添加成功",
+                            type: "success",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    );
+                    //查询
+                    search();
+
+                } else {
+                    swal(
+                        {
+                            title: "添加失败",
+                            type: "warning",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    )
+                }
+            })
+```
+
+### 14.3 修改用户信息
+
+#### 14.3.1 回显数据
+
+```js
+$.getJSON('/adminuser/queryById/' + adminId, function (result) {
+                if (result.code == 200) {
+                    var data = result.data;
+                    //alert(JSON.stringify(data));
+                    $('#updateeModal').modal('show');
+
+
+                    //查询要回显的角色ID集合
+                    var roleIds = new Array();
+                    $.getJSON("/admin-user-role/queryByAdminId/" + adminId, {}, function (res) {
+                        if (res.code == 200) {
+                            var d = res.data;
+                            for (var i = 0; i < d.length; i++) {
+                                var roleId = d[i].roleId;
+                                roleIds.push(roleId);
+                            }
+                        }
+
+                        //要显示的所有的角色信息
+                        $.getJSON("/adminrole/list", {}, function (releset) {
+                            var e = releset.data;
+                            $(e).each(function () {
+                                if (isHasRoleId(roleIds,this.id)) {
+                                    $('#adminRoles_update').append("<input checked type='checkbox' name='roleNames_update' value='" + this.id + "'/>" + this.roleName + "&nbsp;&nbsp;");
+                                } else {
+                                    $('#adminRoles_update').append("<input type='checkbox' name='roleNames_update' value='" + this.id + "'/>" + this.roleName + "&nbsp;&nbsp;");
+                                }
+                            });
+                        })
+                    });
+```
+
+```java
+    @GetMapping("queryById/{adminId}")
+    public DataResults queryById(@PathVariable("adminId") Integer adminId){
+        Adminuser adminuser = adminuserService.getById(adminId);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
+```
+
+```java
+    @GetMapping("queryByAdminId/{adminId}")
+    public DataResults queryByAdminId(@PathVariable("adminId") Integer adminId){
+        QueryWrapper<AdminUserRole> q = new QueryWrapper<>();
+        q.eq("adminId",adminId);
+        List<AdminUserRole> list = adminUserRoleService.list(q);
+        return DataResults.success(ResultCode.SUCCESS,list);
+    }
+```
+
+#### 14.3.2 修改数据
+
+```js
+$.post("/adminuser/update", {
+                "adminId":upadminId,
+                "adminName": upadminName,
+                "phone": upphone,
+                "gender": upgender,
+                "birthday": upbirthday,
+                "idcard": upidcard,
+                "roleIds": roleIds.toString(),
+                "_method":"put"
+            }, function (releset) {
+                if (releset.code == 200) {
+                    $("#dg").bootstrapTable('load', releset);
+                    $('#updateeModal').modal('hide');
+                    swal(
+                        {
+                            title: "更新成功",
+                            type: "success",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    );
+                    //查询
+                    search();
+                } else {
+                    swal(
+                        {
+                            title: "更新失败",
+                            type: "warning",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    )
+                }
+            })
+```
+
+```java
+    @PutMapping("update")
+    public DataResults update(Adminuser adminuser,String roleIds){
+        try {
+            adminuserService.updateAdminUser(adminuser,roleIds);
+            return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+```java
+@Override
+    @Transactional
+    public void updateAdminUser(Adminuser adminuser, String roleIds) {
+        //更新用户表
+        adminuserMapper.updateById(adminuser);
+        // 更新关联关系表
+        adminUserRoleService.remove(new QueryWrapper<AdminUserRole>().eq("adminId",adminuser.getAdminId()));
+        String[] split = roleIds.split(",");
+        List<AdminUserRole> list = new ArrayList<>();
+        for(String roleId : split){
+            AdminUserRole adminUserRole = new AdminUserRole(null, adminuser.getAdminId(), Integer.valueOf(roleId));
+            list.add(adminUserRole);
+        }
+        adminUserRoleService.saveBatch(list);
+    }
+```
+
+### 14.4 删除用户信息
+
+```java
+ $.post("/adminuser/delete/"+adminId, {"_method":"delete"}, function (releset) {
+                            if (releset.code== 200) {
+                                $("#dg").bootstrapTable('load', releset);
+                                swal(
+                                    {
+                                        title: "删除成功",
+                                        type: "success",
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }
+                                );
+                                search();
+                            } else {
+                                swal(
+                                    {
+                                        title: "删除失败",
+                                        type: "warning",
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }
+                                )
+                            }
+                        })
+```
+
+```java
+    @DeleteMapping("delete/{adminId}")
+    public DataResults delete(@PathVariable("adminId") Integer adminId){
+        Adminuser adminuser = new Adminuser(adminId,1);
+        boolean updated = adminuserService.updateById(adminuser);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+
+```
+
+## 15. 角色关联模块
+
+### 15.1 角色信息查询
+
+```js
+ $.getJSON("/adminrole/queryPage", {
+                "pageSize": opt.pageSize,
+                "pageNumber": opt.pageNumber,
+                "roleName": roleName
+            }, function (releset) {
+                $("#table").bootstrapTable('load', releset);
+            })
+```
+
+```java
+    @GetMapping("queryPage")
+    public Map<String,Object> queryPage(Integer pageSize, Integer pageNumber, String roleName){
+        Map<String,Object> resultMap = new HashMap<>();
+        QueryWrapper<Adminrole> q = new QueryWrapper<Adminrole>();
+        q.like(StringUtils.isNotEmpty(roleName),"roleName",roleName);
+        q.eq("del",0);
+        IPage<Adminrole> page = adminroleService.page(new Page<Adminrole>(pageNumber, pageSize), q);
+        resultMap.put("total",page.getTotal());
+        resultMap.put("rows",page.getRecords());
+        return resultMap;
+    }
+```
+
+### 15.2 新增角色信息
+
+```js
+ //异步加载新增的时候的菜单列表
+            $.getJSON("/adminmenus/list", {}, function (releset) {
+                var e = releset.data;
+                $(e).each(function () {
+                    if(this.parentId==0){
+                        $('#adminMenus_add').append("<input type='checkbox' id='add_"+this.id+"' name='adminMenus_add' value='" + this.id + "'/>" + this.title + "</br>");
+                        for (var i = 0; i < e.length; i++) {
+                            if(e[i].parentId==this.id){
+                                $('#adminMenus_add').append("&nbsp;&nbsp;&nbsp;&nbsp;<input lang='lang_"+e[i].parentId+"' onclick='clickChild("+e[i].parentId+");' type='checkbox' name='adminMenus_add' value='" + e[i].id + "'/>" + e[i].title + "</br>");
+                            }
+                        }
+                    }
+                })
+            });
+```
+
+```js
+$.post("/adminrole/add", {
+                "roleName": roleName,
+                "remark": remark,
+                "menusIds": menusIds.toString()
+            }, function (releset) {
+                if (releset.code == 200) {
+                    $("#dg").bootstrapTable('load', releset);
+                    $('#exampleModal').modal('hide');
+                    swal(
+                        {
+                            title: "添加成功",
+                            type: "success",
+                            timer: 1500,
+                            showConfirmButton: false
+                        },function() {
+                            location.reload();
+                        }
+                    );
+                } else {
+                    swal(
+                        {
+                            title: "添加失败",
+                            type: "warning",
+                            timer: 1500,
+                            showConfirmButton: false
+                        }
+                    )
+                }
+            })
+```
+
+```java
+    @PostMapping("add")
+    public DataResults add(Adminrole adminrole, String menusIds){
+        try {
+            adminrole.setDel("0");
+            adminroleService.addRole(adminrole,menusIds);
+            return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+```java
+@Transactional
+@Override
+public void addRole(Adminrole adminrole, String menusIds) {
+    //新增角色信息
+    adminroleMapper.insert(adminrole);
+    //添加关联
+    String[] split = menusIds.split(",");
+    List<AdminRoleMenus> list = new ArrayList<>();
+    for(String menusId : split){
+        AdminRoleMenus adminRoleMenus = new AdminRoleMenus(null, adminrole.getId(), Integer.valueOf(menusId));
+        list.add(adminRoleMenus);
+    }
+    adminRoleMenusService.saveBatch(list);
+}
+```
+
+### 15.3  更新角色信息
+
+```js
+$.getJSON('/adminrole/queryById/' + id, function (result) {
+                $("#table").bootstrapTable("load", result);
+                $("#uproleName").val(result.data.roleName);
+                $("#upremark").val(result.data.remark);
+
+                //要回显的集合
+                var menuIds = new Array();
+                $.getJSON("/admin-role-menus/queryByRoleId/" + id, {}, function (res) {
+                    if (res.code == 200) {
+                        var d = res.data;
+                        for (var i = 0; i < d.length; i++) {
+                            var menuId = d[i].menuId;
+                            menuIds.push(menuId);
+                        }
+                    }
+
+                    //异步加载新增的时候的角色列表
+                    $.getJSON("/adminmenus/list", {}, function (releset) {
+                        var e = releset.data;
+                        $(e).each(function () {
+                            if(this.parentId==0){
+                                if(isHasMenuId(menuIds,this.id)){
+                                    $('#adminMenus_update').append("<input checked type='checkbox' id='up_"+this.id+"' name='adminMenus_update' value='" + this.id + "'/>" + this.title + "</br>");
+                                }else{
+                                    $('#adminMenus_update').append("<input type='checkbox' id='up_"+this.id+"' name='adminMenus_update' value='" + this.id + "'/>" + this.title + "</br>");
+                                }
+                                for (var i = 0; i < e.length; i++) {
+                                    if(e[i].parentId==this.id){
+                                        if(isHasMenuId(menuIds,e[i].id)){
+                                            $('#adminMenus_update').append("&nbsp;&nbsp;&nbsp;&nbsp;<input checked lang='uplang_"+e[i].parentId+"' onclick='upclickChild("+e[i].parentId+");' type='checkbox' name='adminMenus_update' value='" + e[i].id + "'/>" + e[i].title + "</br>");
+                                        }else{
+                                            $('#adminMenus_update').append("&nbsp;&nbsp;&nbsp;&nbsp;<input lang='uplang_"+e[i].parentId+"' onclick='upclickChild("+e[i].parentId+");' type='checkbox' name='adminMenus_update' value='" + e[i].id + "'/>" + e[i].title + "</br>");
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                    });
+
+                });
+```
+
+```js
+$.post('/adminrole/update', {
+                'id': id,
+                'roleName': uproleName,
+                'remark': upremark,
+                'menusIds':menusIds.toString(),
+                '_method': 'put'
+            }, function (result) {
+                if (result.code == 200) {
+                    swal("更新！", "更新成功", "success",function() {
+                        location.reload();
+                    });
+                } else {
+                    swal("更新！", "更新失败", "error");
+                }
+            });
+```
+
+#### 15.3.1 角色数据回显
+
+```java
+    @GetMapping("queryById/{id}")
+    public DataResults queryById(@PathVariable("id") Integer id){
+        Adminrole adminrole = adminroleService.getById(id);
+        return DataResults.success(ResultCode.SUCCESS);
+    }
+```
+
+```java
+    @GetMapping("queryByRoleId/{id}")
+    public DataResults queryByRoleId(@PathVariable("id") Integer id){
+        List<AdminRoleMenus> list = adminRoleMenusService.list(new QueryWrapper<AdminRoleMenus>().eq("roleId", id));
+        return DataResults.success(ResultCode.SUCCESS,list);
+    }
+
+```
+
+#### 15.2.2 角色数据更新
+
+```java
+ @PutMapping("update")
+    public DataResults update(Adminrole adminrole, String menusIds){
+        try {
+            //更新角色
+            adminroleService.updateRole(adminrole,menusIds);
+            return DataResults.success(ResultCode.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+```java
+ 	@Override
+    @Transactional
+    public void updateRole(Adminrole adminrole, String menusIds) {
+        //修改角色信息
+        adminroleMapper.updateById(adminrole);
+        //更新关联表信息
+        adminRoleMenusService.remove(new QueryWrapper<AdminRoleMenus>().eq("roleId",adminrole.getId()));
+        List<AdminRoleMenus> list = new ArrayList<>();
+        String[] split = menusIds.split(",");
+        for(String menusId : split){
+            AdminRoleMenus adminRoleMenus = new AdminRoleMenus(null,adminrole.getId(),Integer.valueOf(menusId));
+            list.add(adminRoleMenus);
+        }
+        adminRoleMenusService.saveBatch(list);
+    }
+```
+
+### 15.4 删除角色信息
+
+```js
+$.post('/adminrole/delete/' + id, {
+                            "_method": 'delete'
+                        }, function (result) {
+                            if (result.code == 200) {
+                                swal("删除！", "删除成功", "success");
+                            } else if(result.code == 800) {
+                                swal("删除！", "数据使用中，勿删除！", "error");
+                            }else{
+                                swal("删除！", "删除异常！", "error");
+                            }
+                            search();
+                        });
+                    } else {
+                        swal("取消！", "您已取消删除)", "error");
+                    }
+```
+
+
+
+
+
+
+
+```sql
+select distinct adminmenus.*
+        from adminuser
+        inner join admin_user_role on adminuser.adminId = admin_user_role.adminId
+        inner join adminrole on admin_user_role.roleId = adminrole.id
+        inner join admin_role_menus on adminrole.id = admin_role_menus.roleId
+        inner join adminmenus on admin_role_menus.menuId = adminmenus.id
+        where adminuser.del = 0 and adminrole.del = 0 and adminmenus.del = 0
+        and adminuser.adminId = #{adminId} and adminmenus.type = 0;
+```
+
+## 16. 查询当前用户的角色和菜单
+
+```java
+  @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        response.setContentType("application/json;charset=utf-8");
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        log.info("登录成功的用户是:"+userDetails.getUsername());
+        //存储用户认证成功的用户东西
+        Adminuser adminuser = adminuserService.getOne(new QueryWrapper<Adminuser>().eq("adminName", userDetails.getUsername()));
+        request.getSession().setAttribute("loginUser",adminuser);
+
+        //查询登录用户的角色信息
+        Integer adminId = adminuser.getAdminId();
+        List<AdminUserRole> roleList = adminUserRoleService.list(new QueryWrapper<AdminUserRole>().eq("adminId", adminId));
+        List<Adminrole> adminroleList = new ArrayList<>();
+        for(AdminUserRole userRole : roleList){
+            Adminrole adminrole = adminroleService.getById(userRole.getRoleId());
+            adminroleList.add(adminrole);
+        }
+        request.getSession().setAttribute("adminroleList",adminroleList);
+        //查询登录用户的菜单权限
+        List<Adminmenus>  adminmenuList = adminmenusService.listMenusByAdminId(adminId);
+        request.getSession().setAttribute("adminmenusList",adminmenuList);
+
+        DataResults<String> results = DataResults.success(ResultCode.SUCCESS);
+        response.getWriter().write(new Gson().toJson(results));
+    }
+```
+
+```xml
+<!--    List<Adminmenus> listMenusByAdminId(Integer adminId);-->
+    <select id="listMenusByAdminId" resultType="com.v1.pojo.Adminmenus">
+        select distinct adminmenus.*
+        from adminuser
+        inner join admin_user_role on adminuser.adminId = admin_user_role.adminId
+        inner join adminrole on admin_user_role.roleId = adminrole.id
+        inner join admin_role_menus on adminrole.id = admin_role_menus.roleId
+        inner join adminmenus on admin_role_menus.menuId = adminmenus.id
+        where adminuser.del = 0 and adminrole.del = 0 and adminmenus.del = 0
+        and adminuser.adminId = #{adminId} and adminmenus.type = 0;
+    </select>
+```
+
+```html
+<div class="left-nav">
+    <div id="side-nav">
+        <ul id="nav">
+            <li th:each="p:${session.adminmenusList}" th:if="${p.parentId==0}">
+                <a href="javascript:;">
+                    <i class="iconfont" th:utext="${p.iocn}">XXXX</i>
+                    <cite th:text="${p.title}">XXXXX</cite>
+                    <i class="iconfont nav_right">&#xe697;</i>
+                </a>
+                <ul class="sub-menu">
+                    <li th:each="s:${session.adminmenusList}" th:if="${s.parentId==p.id}">
+                        <a th:_href="${s.url}">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite th:text="${s.title}">xxxx</cite>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+```
+
+## 17. 基于SpringSecurity完成授权操作
+
+### 17.1 基于XML实现授权操作
+
+1. 在用户进行认证时动态获取角色信息
+2. 根据角色信息进行授权
+
+```java
+ @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("页面上输入的用户名： "+username);
+        Adminuser adminuser = adminuserMapper.selectOne(new QueryWrapper<Adminuser>().eq("adminName", username));
+        if(adminuser == null){
+            throw new UsernameNotFoundException("用户信息不存在");
+        }else{
+//            List<GrantedAuthority> list = new ArrayList<>();
+//            list.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            //动态获取用户的角色信息
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            //获取用户的编号
+            Integer adminId = adminuser.getAdminId();
+            List<AdminUserRole> userRoles = adminUserRoleService.list(new QueryWrapper<AdminUserRole>().eq("adminId", adminId));
+            for(AdminUserRole userRole : userRoles){
+                Adminrole adminrole = adminroleService.getById(userRole.getRoleId());
+                String roleName = adminrole.getRoleName();
+                authorities.add(new SimpleGrantedAuthority("ROLE_"+roleName));
+            }
+            return new User(adminuser.getAdminName(),adminuser.getAdminPassword().trim(),authorities);
+        }
+    }
+```
+
+```xml
+        <security:intercept-url pattern="/login.html" access="permitAll()"/>
+        <security:intercept-url pattern="/createSystemCode" access="permitAll()"/>
+<!--        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN','ROLE_USER')"/>-->
+        <security:intercept-url pattern="/member-card.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/member-cardextend-records.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/member-charge.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/member-charge-records.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/1oss.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/goods-list.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/goods-sales.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
+        <security:intercept-url pattern="/coach.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
+        <security:intercept-url pattern="/coach-subject.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
+        <security:intercept-url pattern="/subject.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
+        <security:intercept-url pattern="/equipment.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
+        <security:intercept-url pattern="/index.html" access="hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')"/>
+        <security:intercept-url pattern="/home.html" access="hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')"/>
+        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_管理员')"/>
+```
+
+### 17.2 配置403页面
+
+```java
+/**
+ * 访问权限不足的处理器
+ */
+@Component(value = "simpleAccessDeniedHandler")
+public class SimpleAccessDeniedHandler implements AccessDeniedHandler {
+
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        String requestURI = request.getRequestURI();
+        response.setContentType("text/html;charset=utf-8");
+        if(requestURI != null && requestURI.endsWith(".html")){//同步请求
+            response.sendRedirect("/403.html");
+        }else{//异步请求
+            DataResults.success(ResultCode.NO_RIGHTS);
+            response.getWriter().write(new Gson().toJson(response));
+        }
+    }
+}
+```
+
+```xml
+<!--        配置没有权限访问资源的处理器-->
+        <security:access-denied-handler ref="simpleAccessDeniedHandler"/>
+```
+
+### 17.3 基于注解实现授权
+
+**xml实现授权的优先级比注解实现的优先级要高**
+
+```xml
+<!-- 如果在业务层使用注解就在Spring配置文件添加 -->    
+<!-- 如果在服务层使用注解就在SpringMVC配置文件添加 --> 
+<security:global-method-security jsr250-annotations="enabled"
+                                     pre-post-annotations="enabled"
+                                     secured-annotations="enabled"
+                                     proxy-target-class="true"
+    />
+```
+
+```java
+//    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
+//    @Secured(value ={"ROLE_管理员","ROLE_教师"})
+    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
+    @RequestMapping("goods-list.html")
+    public String toGoodsList(){
+        return "goods-list";
+    }
+```
+
+```java
+//    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
+//    @Secured(value = {"ROLE_管理员","ROLE_教师"})
+    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
+    @DeleteMapping("delete/{id}")
+    public DataResults delete(@PathVariable("id") Integer id){
+        Goodinfo goodinfo = new Goodinfo(id,1);
+        boolean updated = goodinfoService.updateById(goodinfo);
+        if(updated){
+            return DataResults.success(ResultCode.SUCCESS);
+        }else{
+            return DataResults.success(ResultCode.FAIL);
+        }
+    }
+```
+
+### 17.4 基于页面级别的授权
+
+优势在于可以进行更加细腻度的授权
+
+在Thymeleaf模板引擎使用SpringSecurity标签库，前提：
+
+1. pom文件引入依赖
+2. springmvc配置文件添加配置
+
+```xml
+<!--spring-security thymeleaf标签库-->
+<dependency>
+    <groupId>org.thymeleaf.extras</groupId>
+    <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+    <version>3.0.4.RELEASE</version>
+</dependency>
+```
+
+```xml
+    <!-- 模板引擎 -->
+    <bean id="templateEngine"
+          class="org.thymeleaf.spring5.SpringTemplateEngine">
+        <property name="templateResolver" ref="templateResolver"/>
+        <!-- 配置Thymeleaf标签库 -->
+        <property name="additionalDialects">
+            <set>
+                <bean class="org.thymeleaf.extras.springsecurity5.dialect.SpringSecurityDialect"/>
+            </set>
+        </property>
+    </bean>
+```
+
+```html
+<button sec:authorize="hasAnyRole('ROLE_管理员','ROLE_教师')" 
+        type="button" 
+        class="btn btn-default" 
+        onclick="loos()" 
+        style="float: right; margin-top: 20px" 
+        data-toggle="modal" 
+        data-target="#myModal">
+    <span class="glyphicon glyphicon-plus"></span>添加拾取物详情</button>
+```
+
