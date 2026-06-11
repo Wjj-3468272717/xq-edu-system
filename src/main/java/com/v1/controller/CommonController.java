@@ -1,9 +1,13 @@
 package com.v1.controller;
 
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.annotation.security.RolesAllowed;
 
 @Controller
 public class CommonController {
@@ -27,7 +31,10 @@ public class CommonController {
         return "subject";
     }
 
-    @RequestMapping("index.html")
+//    @RolesAllowed(value = {"ROLE_管理员","ROLE_前台","ROLE_教师"})
+//    @Secured(value = {"ROLE_管理员","ROLE_前台","ROLE_教师"})
+    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_前台','ROLE_教师')")
+    @RequestMapping({"index.html","/"})
     public String toIndexPage(){
         return "index";
     }
@@ -77,6 +84,9 @@ public class CommonController {
         return "coach-subject";
     }
 
+    //    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
+//    @Secured(value ={"ROLE_管理员","ROLE_教师"})
+    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
     @RequestMapping("goods-list.html")
     public String toGoodsList(){
         return "goods-list";
@@ -87,7 +97,7 @@ public class CommonController {
         return "goods-sales";
     }
 
-    @RequestMapping("loos.html")
+    @RequestMapping("loss.html")
     public String toLoos(){
         return "loos";
     }

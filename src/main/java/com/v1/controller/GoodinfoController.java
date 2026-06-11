@@ -13,8 +13,11 @@ import com.v1.utils.DateTimeUtils;
 import com.v1.utils.ResultCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.security.RolesAllowed;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +79,9 @@ public class GoodinfoController {
         }
     }
 
+//    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
+//    @Secured(value = {"ROLE_管理员","ROLE_教师"})
+    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
     @DeleteMapping("delete/{id}")
     public DataResults delete(@PathVariable("id") Integer id){
         Goodinfo goodinfo = new Goodinfo(id,1);

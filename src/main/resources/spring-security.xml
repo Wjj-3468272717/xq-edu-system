@@ -20,20 +20,20 @@
         <security:intercept-url pattern="/createSystemCode" access="permitAll()"/>
         <security:intercept-url pattern="/403.html" access="permitAll()"/>
 <!--        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN','ROLE_USER')"/>-->
-        <security:intercept-url pattern="/member-card.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/member-cardextend-records.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/member-charge.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/member-charge-records.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/1oss.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/goods-list.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/goods-sales.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>
-        <security:intercept-url pattern="/coach.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
-        <security:intercept-url pattern="/coach-subject.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
-        <security:intercept-url pattern="/subject.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
-        <security:intercept-url pattern="/equipment.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>
-        <security:intercept-url pattern="/index.html" access="hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')"/>
-        <security:intercept-url pattern="/home.html" access="hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')"/>
-        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_管理员')"/>
+<!--        <security:intercept-url pattern="/member-card.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/member-cardextend-records.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/member-charge.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/member-charge-records.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/1oss.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/goods-list.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/goods-sales.html" access="hasAnyRole('ROLE_管理员','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/coach.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>-->
+<!--        <security:intercept-url pattern="/coach-subject.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>-->
+<!--        <security:intercept-url pattern="/subject.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>-->
+<!--        <security:intercept-url pattern="/equipment.html" access="hasAnyRole('ROLE_管理员','ROLE_教师')"/>-->
+<!--        <security:intercept-url pattern="/index.html" access="hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')"/>-->
+<!--        <security:intercept-url pattern="/home.html" access="hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')"/>-->
+        <security:intercept-url pattern="/**" access="isAuthenticated()"/>
 
         <!--    配置自定义登录页面-->
         <security:form-login login-page="/login.html"
