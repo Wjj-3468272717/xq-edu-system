@@ -4182,3 +4182,112 @@ public class SimpleAccessDeniedHandler implements AccessDeniedHandler {
     <span class="glyphicon glyphicon-plus"></span>添加拾取物详情</button>
 ```
 
+### 17.5 动态授权
+
+1. 自定义授权过滤器
+   1. 获取用户访问资源地址
+   2. 进行数据库查询操作，获取对应资源与角色的信息
+   3. 遍历所有的资源，查看是否和当前的url进行匹配
+      - 没有匹配上，返回ROLE_null,不做任何权限处理
+      - 匹配上出入List集合
+2. 自定义授权投票器
+   1. 获取当前用户认证的角色信息
+   2. 循环遍历当前请求需要的角色信息
+      - ROLE_null不做权限控制，return
+      - 符合当前资源请求需要用到的权限，return
+      - 权限不足，无法访问，抛出AccessDeniedException异常
+3. 修改SpringSecurity配置文件
+
+```java
+/**
+ * 动态授权过滤器
+ */
+@Component(value = "customerFilterInvocationSecurityMetaDataSource")
+public class CustomerFilterInvocationSecurityMetaDataSource implements FilterInvocationSecurityMetadataSource {
+
+    @Autowired
+    AdminmenusService adminmenusService;
+    @Autowired
+    AdminroleService adminroleService;
+
+    private AntPathMatcher antPathMatcher = new AntPathMatcher();
+
+    //动态获取某个资源需要用到哪些权限
+    @Override
+    public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
+        //Object 封装了 request  response
+        FilterInvocation request = (FilterInvocation) object;
+        //获取用户访问资源地址
+        String url = request.getRequestUrl();
+        //进行数据库查询操作，获取对应资源与角色的信息
+        List<Adminmenus> list = adminmenusService.list(new QueryWrapper<Adminmenus>().eq("type", 1).eq("del", 0));
+        //遍历所有的资源，查看是否和当前的url进行匹配
+        for(Adminmenus adminmenus : list){
+            if(adminmenus!=null && antPathMatcher.match(adminmenus.getUrl(),url)){
+                //匹配url通过
+                String remark = adminmenus.getRemark();
+                String[] roles = remark.split(",");
+                String[] roleStr = new String[roles.length];
+                for(int i = 0; i < roles.length; i++){
+                    String roleId = roles[i];
+                    Adminrole adminrole = adminroleService.getById(Integer.valueOf(roleId));
+                    roleStr[i] = "ROLE_"+adminrole.getRoleName();
+                }
+                return SecurityConfig.createList(roleStr);
+            }
+        }
+        //没有匹配上，返回ROLE_null,不做任何权限处理
+        return SecurityConfig.createList("ROLE_null");
+    }
+
+    @Override
+    public Collection<ConfigAttribute> getAllConfigAttributes() {
+        return Collections.emptyList();
+    }
+
+    //进行类型经验支持
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return true;
+    }
+}
+
+```
+
+```java
+@Component(value = "customAccessDecisionManager")
+public class CustomAccessDecisionManager implements AccessDecisionManager {
+    @Override
+    public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
+        //获取当前用户认证的角色信息
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        //循环遍历当前请求需要的角色信息，满足一个即可
+        for(ConfigAttribute configAttribute : configAttributes){
+            if("ROLE_null".equals(configAttribute.getAttribute())){
+                //不做权限控制
+                return;
+            }
+            //循环判断用户的角色权限是否符合当前资源请求需要用到的权限
+            for(GrantedAuthority authority : authorities){
+                if(authority.getAuthority().equals(configAttribute.getAttribute())){
+                    //权限通过
+                    return;
+                }
+            }
+        }
+        throw new AccessDeniedException("权限不足，无法访问");
+    }
+
+    @Override
+    public boolean supports(ConfigAttribute attribute) {
+        return true;
+    }
+
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return true;
+    }
+}
+
+```
+

@@ -81,7 +81,7 @@ public class GoodinfoController {
 
 //    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
 //    @Secured(value = {"ROLE_管理员","ROLE_教师"})
-    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
+//    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师')")
     @DeleteMapping("delete/{id}")
     public DataResults delete(@PathVariable("id") Integer id){
         Goodinfo goodinfo = new Goodinfo(id,1);

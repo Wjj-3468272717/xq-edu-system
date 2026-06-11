@@ -32,8 +32,8 @@ public class CommonController {
     }
 
 //    @RolesAllowed(value = {"ROLE_管理员","ROLE_前台","ROLE_教师"})
-//    @Secured(value = {"ROLE_管理员","ROLE_前台","ROLE_教师"})
-    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_前台','ROLE_教师')")
+    @Secured(value = {"ROLE_管理员","ROLE_前台","ROLE_教师"})
+//    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_前台','ROLE_教师')")
     @RequestMapping({"index.html","/"})
     public String toIndexPage(){
         return "index";
@@ -74,6 +74,7 @@ public class CommonController {
         return "member-cardextend-records";
     }
 
+//    @Secured(value = {"ROLE_管理员","ROLE_教师"})
     @RequestMapping("coach.html")
     public String toCoach(){
         return "coach";
@@ -86,7 +87,7 @@ public class CommonController {
 
     //    @RolesAllowed(value = {"ROLE_管理员","ROLE_教师"})
 //    @Secured(value ={"ROLE_管理员","ROLE_教师"})
-    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')")
+//    @PreAuthorize(value = "hasAnyRole('ROLE_管理员','ROLE_教师','ROLE_前台')")
     @RequestMapping("goods-list.html")
     public String toGoodsList(){
         return "goods-list";
